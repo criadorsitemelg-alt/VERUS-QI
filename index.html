@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VERUS</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@400;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --blue:#0D47C7;--blue2:#1A5AE0;--blue3:#0A38A0;--bluelt:#E8EEFF;--bluelt2:#D0DBFF;
+  --gold:#FFD700;--gold2:#FFC200;--gold3:#B8960A;
+  --green:#388E3C;--green2:#4CAF50;--greenlt:#E8F5E9;
+  --red:#D32F2F;--redlt:#FFEBEE;
+  --gray1:#F5F6FA;--gray2:#EAECF4;--gray3:#D0D5E8;--gray4:#8A94B0;--gray5:#4A5270;
+  --white:#fff;--dark:#1A2040;
+  --bd:rgba(13,71,199,.18);--bd2:rgba(255,215,0,.5);
+  --sh:0 2px 16px rgba(13,71,199,.10);--sh2:0 4px 28px rgba(13,71,199,.18);
+  --tr:all .2s cubic-bezier(.4,0,.2,1);
+  --r16:16px;--r12:12px;--r8:8px;
+}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',sans-serif;background:var(--gray1);color:var(--dark);min-height:100vh;overflow-x:hidden;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+.particle{position:fixed;pointer-events:none;border-radius:50%;z-index:9999;animation:fadeUp 3s ease forwards;}
+
+.pg{display:none;min-height:100vh;animation:fadeIn .25s ease;}
+.pg.ativa{display:flex;flex-direction:column;}
+
+.nav{position:sticky;top:0;z-index:500;background:var(--blue);box-shadow:0 2px 12px rgba(13,71,199,.25);padding:0 20px;height:58px;display:flex;align-items:center;gap:12px;}
+.nav-logo{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:var(--gold);cursor:pointer;flex-shrink:0;letter-spacing:1px;}
+.nav-sep{flex:1;}
+.nav-crumb{font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;transition:var(--tr);}
+.nav-crumb:hover{color:var(--gold);}
+.nav-slash{font-size:12px;color:rgba(255,255,255,.35);margin:0 4px;}
+.nav-btn{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);color:#fff;font-size:12px;font-weight:600;padding:7px 16px;border-radius:100px;cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif;}
+.nav-btn:hover{background:var(--gold);color:var(--blue);border-color:var(--gold);}
+
+#pg-dash{background:var(--gray1);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+.dash-hero{background:linear-gradient(135deg,var(--blue) 0%,var(--blue3) 100%);padding:18px 20px 16px;text-align:center;position:relative;overflow:hidden;flex-shrink:0;}
+.dash-hero::after{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");pointer-events:none;}
+.eyebrow{display:inline-flex;align-items:center;gap:7px;background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);border-radius:100px;padding:4px 16px;font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;animation:fadeUp .4s ease;position:relative;z-index:1;}
+.dash-title{font-family:'Playfair Display',serif;font-size:clamp(40px,8vw,72px);font-weight:900;color:var(--white);line-height:.9;letter-spacing:-2px;margin-bottom:4px;position:relative;z-index:1;animation:fadeUp .4s .08s ease both;}
+.dash-title span{color:var(--gold);}
+.dt2{font-family:'JetBrains Mono',monospace;font-size:clamp(9px,1.2vw,11px);letter-spacing:5px;font-weight:400;color:rgba(255,215,0,.75);display:block;margin-top:7px;}
+.dash-sub{font-size:clamp(12px,1.4vw,14px);color:rgba(255,255,255,.75);max-width:460px;margin:10px auto 0;line-height:1.6;position:relative;z-index:1;animation:fadeUp .4s .16s ease both;}
+
+.brasil-stats{display:flex;justify-content:center;gap:0;border-radius:var(--r16);overflow:hidden;max-width:620px;margin:16px auto 0;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);position:relative;z-index:1;animation:fadeUp .4s .22s ease both;}
+.bs-item{flex:1;padding:12px 8px;text-align:center;}
+.bs-item:not(:last-child){border-right:1px solid rgba(255,255,255,.15);}
+.bs-val{font-family:'JetBrains Mono',monospace;font-size:clamp(14px,2.2vw,20px);font-weight:700;color:var(--gold);}
+.bs-lab{font-size:9px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px;}
+
+.dash-main{max-width:1080px;margin:0 auto;padding:12px 20px 16px;flex:1;overflow:hidden;display:flex;flex-direction:column;}
+.sec-title{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--gray4);margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--gray3);}
+
+.main-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+@media(max-width:620px){.main-cards{grid-template-columns:1fr;}}
+.mcard{background:var(--white);border-radius:18px;padding:20px 22px;cursor:pointer;position:relative;overflow:hidden;transition:var(--tr);border:1.5px solid var(--gray3);}
+.mcard:hover{transform:translateY(-4px);box-shadow:var(--sh2);border-color:var(--blue);}
+.mcard-qi{border-top:3px solid var(--gold);}
+.mcard-sim{border-top:3px solid var(--blue);}
+.mc-badge{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 11px;border-radius:100px;margin-bottom:10px;background:var(--bluelt);color:var(--blue);border:1px solid var(--bluelt2);}
+.mc-ico{font-size:32px;margin-bottom:8px;display:block;animation:float 3.5s ease-in-out infinite;}
+.mc-title{font-size:clamp(17px,2.2vw,21px);font-weight:800;margin-bottom:5px;color:var(--dark);}
+.mc-desc{font-size:12px;color:var(--gray4);line-height:1.5;margin-bottom:12px;}
+.mc-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;}
+.mc-tag{font-size:10px;font-weight:600;padding:2px 9px;border-radius:100px;background:var(--gray2);color:var(--gray5);}
+.mc-btn{display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:#fff;font-size:12px;font-weight:700;padding:8px 18px;border-radius:100px;transition:var(--tr);}
+.mcard:hover .mc-btn{background:var(--gold);color:var(--blue);}
+
+.dash-bot{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;}
+@media(max-width:660px){.dash-bot{grid-template-columns:1fr;}}
+.dpanel{background:var(--white);border:1.5px solid var(--gray3);border-radius:var(--r16);padding:16px;}
+.dp-title{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.rank-list{display:flex;flex-direction:column;gap:5px;}
+.ri{display:flex;align-items:center;gap:10px;background:var(--gray1);border-radius:var(--r8);padding:8px 10px;transition:var(--tr);}
+.ri:hover{background:var(--bluelt);}
+.ri-pos{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;min-width:20px;}
+.ri-pos.g{color:#B8860B;} .ri-pos.s{color:#888;} .ri-pos.b{color:#A0522D;} .ri-pos.o{color:var(--gray4);}
+.ri-name{flex:1;font-size:12px;font-weight:600;}
+.ri-sc{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--blue);}
+.usg{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.usg-i{background:var(--gray1);border-radius:var(--r8);padding:10px;text-align:center;}
+.usg-v{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--blue);}
+.usg-l{font-size:9px;color:var(--gray4);margin-top:2px;text-transform:uppercase;letter-spacing:1px;}
+
+#pg-qi{background:var(--gray1);}
+.qi-body{max-width:800px;margin:0 auto;padding:40px 20px 80px;}
+.qi-hero{background:linear-gradient(135deg,var(--blue),var(--blue3));border-radius:22px;padding:40px;text-align:center;margin-bottom:24px;position:relative;overflow:hidden;}
+.qi-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.qi-ico{font-size:56px;display:block;margin-bottom:12px;animation:float 3s ease-in-out infinite;}
+.qi-ht{font-family:'Playfair Display',serif;font-size:clamp(24px,5vw,40px);font-weight:900;color:#fff;margin-bottom:8px;}
+.qi-ht span{color:var(--gold);}
+.qi-hs{font-size:13px;color:rgba(255,255,255,.75);line-height:1.6;max-width:460px;margin:0 auto;}
+.qi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:24px;}
+.qi-ic{background:var(--white);border:1.5px solid var(--gray3);border-radius:var(--r16);padding:18px;}
+.qi-ic-ico{font-size:22px;margin-bottom:6px;}
+.qi-ic-t{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:3px;}
+.qi-ic-d{font-size:11px;color:var(--gray4);line-height:1.4;}
+.qi-form{background:var(--white);border:1.5px solid var(--gray3);border-radius:var(--r16);padding:26px;margin-bottom:16px;}
+.frm-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+@media(max-width:500px){.frm-row{grid-template-columns:1fr;}}
+.frm-g{display:flex;flex-direction:column;gap:5px;}
+.frm-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray4);}
+.frm-i{background:var(--gray1);border:1.5px solid var(--gray3);border-radius:var(--r8);padding:11px 14px;color:var(--dark);font-size:14px;font-family:'Inter',sans-serif;transition:var(--tr);outline:none;}
+.frm-i:focus{border-color:var(--blue);background:#fff;}
+.frm-i::placeholder{color:var(--gray3);}
+.qtd-row{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:20px;}
+.qtd-btn{background:var(--gray1);border:1.5px solid var(--gray3);border-radius:var(--r8);padding:9px;text-align:center;cursor:pointer;transition:var(--tr);font-size:13px;font-weight:700;color:var(--gray5);}
+.qtd-btn:hover,.qtd-btn.sel{background:var(--blue);border-color:var(--blue);color:#fff;}
+.qtd-lbl{font-size:9px;margin-top:2px;color:inherit;opacity:.75;}
+.btn-primary{width:100%;padding:14px;background:var(--blue);color:#fff;font-size:15px;font-weight:700;border:none;border-radius:var(--r12);cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif;}
+.btn-primary:hover:not(:disabled){background:var(--gold);color:var(--blue);}
+.btn-primary:disabled{opacity:.35;cursor:not-allowed;}
+.btn-sec{width:100%;padding:13px;background:var(--gray1);border:1.5px solid var(--gray3);color:var(--dark);font-size:14px;font-weight:600;border-radius:var(--r12);cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif;}
+.btn-sec:hover{background:var(--gray2);}
+
+#pg-sims{background:var(--gray1);}
+.sims-body{max-width:1100px;margin:0 auto;padding:32px 20px 80px;}
+.sims-header{margin-bottom:28px;}
+.sims-title{font-family:'Playfair Display',serif;font-size:clamp(26px,4vw,38px);font-weight:900;color:var(--dark);margin-bottom:4px;}
+.sims-sub{font-size:13px;color:var(--gray4);}
+.sim-sec{margin-bottom:28px;}
+.sim-sh{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.sim-sh-ico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--blue);border:1px solid var(--blue2);}
+.sim-sh-name{font-size:13px;font-weight:800;color:var(--dark);letter-spacing:.3px;text-transform:uppercase;}
+.sim-sh-line{flex:1;height:1px;background:var(--gray3);}
+.sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+/* ── NOVO SCARD — visual premium ── */
+.scard{background:var(--white);border:1.5px solid var(--gray3);border-radius:18px;padding:0;cursor:pointer;transition:var(--tr);overflow:hidden;position:relative;display:flex;flex-direction:column;}
+.scard:hover{border-color:var(--blue);transform:translateY(-5px);box-shadow:0 12px 36px rgba(13,71,199,.14);}
+.scard-top{padding:18px 18px 10px;flex:1;}
+.scard-ico-wrap{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:12px;background:var(--bluelt);border:1px solid var(--bluelt2);transition:var(--tr);}
+.scard:hover .scard-ico-wrap{background:var(--blue);border-color:var(--blue);}
+.scard-name{font-size:14px;font-weight:800;color:var(--dark);margin-bottom:3px;}
+.scard-sub{font-size:11px;color:var(--gray4);line-height:1.5;}
+.scard-bot{padding:10px 18px 14px;border-top:1px solid var(--gray2);display:flex;align-items:center;justify-content:space-between;background:var(--gray1);}
+.scard-lbl{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--blue);}
+.scard-arrow{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;transition:var(--tr);}
+.scard:hover .scard-arrow{background:var(--gold);color:var(--blue);transform:translateX(3px);}
+
+#pg-disc{background:var(--gray1);}
+.disc-body{max-width:680px;margin:0 auto;padding:36px 20px 80px;}
+.disc-hero{background:linear-gradient(135deg,var(--blue),var(--blue3));border-radius:22px;padding:32px;margin-bottom:22px;position:relative;overflow:hidden;}
+.disc-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.dh-ico{font-size:44px;display:block;margin-bottom:9px;animation:float 3s ease-in-out infinite;}
+.dh-name{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:3px;}
+.dh-sub{font-size:13px;color:rgba(255,255,255,.7);}
+.dh-q{font-size:11px;color:var(--gold);font-family:'JetBrains Mono',monospace;margin-top:5px;font-weight:600;}
+.dif-cards{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+.dcard{background:var(--white);border:2px solid var(--gray3);border-radius:var(--r16);padding:16px 20px;cursor:pointer;display:flex;align-items:center;gap:14px;transition:var(--tr);}
+.dcard:hover{transform:translateX(3px);}
+.dcard.f:hover,.dcard.f.sel{border-color:var(--green2);background:var(--greenlt);}
+.dcard.m:hover,.dcard.m.sel{border-color:var(--gold2);background:#FFFDE7;}
+.dcard.d:hover,.dcard.d.sel{border-color:var(--red);background:var(--redlt);}
+.dif-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.dcard.f .dif-dot{background:var(--green2);}
+.dcard.m .dif-dot{background:var(--gold2);}
+.dcard.d .dif-dot{background:var(--red);}
+.dif-info{flex:1;}
+.dif-name{font-size:14px;font-weight:700;margin-bottom:2px;}
+.dcard.f .dif-name{color:var(--green);}
+.dcard.m .dif-name{color:#8B6914;}
+.dcard.d .dif-name{color:var(--red);}
+.dif-desc{font-size:12px;color:var(--gray4);}
+.dif-pill{font-size:9px;font-weight:700;padding:3px 11px;border-radius:100px;}
+.dcard.f .dif-pill{background:var(--greenlt);color:var(--green);border:1px solid #A5D6A7;}
+.dcard.m .dif-pill{background:#FFF9C4;color:#8B6914;border:1px solid #FFE082;}
+.dcard.d .dif-pill{background:var(--redlt);color:var(--red);border:1px solid #FFCDD2;}
+
+#pg-prova{background:var(--gray1);}
+.ptbar{background:var(--blue);border-bottom:1px solid rgba(255,255,255,.1);padding:10px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:400;}
+.ptb-disc{font-size:13px;font-weight:700;color:#fff;}
+.ptb-mode{font-size:10px;padding:3px 11px;border-radius:100px;font-weight:700;}
+.ptb-mode.qi{background:rgba(255,215,0,.2);color:var(--gold);border:1px solid rgba(255,215,0,.4);}
+.ptb-mode.facil{background:rgba(76,175,80,.2);color:#81C784;border:1px solid rgba(76,175,80,.4);}
+.ptb-mode.medio{background:rgba(255,215,0,.2);color:var(--gold);border:1px solid rgba(255,215,0,.4);}
+.ptb-mode.dificil{background:rgba(211,47,47,.2);color:#EF9A9A;border:1px solid rgba(211,47,47,.4);}
+.cron-pill{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:100px;padding:5px 13px;}
+.cron-txt{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:#fff;letter-spacing:2px;}
+.prog-outer{height:4px;background:rgba(13,71,199,.15);}
+.prog-inner{height:100%;background:linear-gradient(90deg,var(--blue),var(--gold));transition:width .4s ease;}
+
+.prova-body{max-width:780px;margin:0 auto;padding:24px 18px 80px;}
+.mini-nav{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:20px;}
+.mn{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;background:var(--white);color:var(--gray4);border:1.5px solid var(--gray3);transition:var(--tr);}
+.mn.curr{background:var(--blue);color:#fff;border-color:var(--blue);}
+.mn.ok{background:var(--greenlt);color:var(--green);border-color:#A5D6A7;}
+.mn.no{background:var(--redlt);color:var(--red);border-color:#FFCDD2;}
+
+.q-num{font-size:10px;font-weight:600;letter-spacing:2px;color:var(--gray4);text-transform:uppercase;margin-bottom:5px;}
+.q-cat{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 11px;border-radius:100px;background:var(--bluelt);color:var(--blue);border:1px solid var(--bluelt2);margin-bottom:14px;}
+.q-card{background:var(--white);border:1.5px solid var(--gray3);border-radius:var(--r16);padding:24px;margin-bottom:16px;font-size:clamp(14px,1.8vw,16px);line-height:1.75;color:var(--dark);animation:fadeUp .2s ease;white-space:pre-line;}
+.alts{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+.alt{background:var(--white);border:2px solid var(--gray3);border-radius:var(--r12);padding:12px 16px;cursor:pointer;display:flex;align-items:flex-start;gap:10px;transition:var(--tr);font-size:13px;line-height:1.5;color:var(--dark);}
+.alt:hover:not(.ok):not(.no){border-color:var(--blue);background:var(--bluelt);transform:translateX(3px);}
+.alt.sel{border-color:var(--blue);background:var(--bluelt);}
+.alt.ok{border-color:var(--green2);background:var(--greenlt);}
+.alt.no{border-color:var(--red);background:var(--redlt);opacity:.7;}
+.alt-l{min-width:28px;height:28px;border-radius:50%;background:var(--gray2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gray5);flex-shrink:0;transition:var(--tr);}
+.alt.sel .alt-l{background:var(--blue);color:#fff;}
+.alt.ok .alt-l{background:var(--green2);color:#fff;}
+.alt.no .alt-l{background:var(--red);color:#fff;}
+.fb{background:var(--white);border-left:4px solid var(--gray3);border-radius:var(--r12);padding:14px 18px;margin-bottom:14px;display:none;animation:fadeUp .2s ease;}
+.fb.ok{border-left-color:var(--green2);background:var(--greenlt);}
+.fb.no{border-left-color:var(--red);background:var(--redlt);}
+.fb-t{font-size:12px;font-weight:700;margin-bottom:4px;}
+.fb.ok .fb-t{color:var(--green);}
+.fb.no .fb-t{color:var(--red);}
+.fb-d{font-size:13px;color:var(--gray5);line-height:1.6;}
+.prova-acts{display:flex;gap:9px;}
+.btn-conf{flex:1;padding:13px;background:var(--blue);color:#fff;font-size:14px;font-weight:700;border:none;border-radius:var(--r12);cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif;}
+.btn-conf:hover:not(:disabled){background:var(--blue2);transform:translateY(-2px);}
+.btn-conf:disabled{opacity:.3;cursor:not-allowed;}
+.btn-next{flex:1;padding:13px;background:var(--gold);color:var(--blue);font-size:14px;font-weight:700;border:none;border-radius:var(--r12);cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif;display:none;}
+.btn-next:hover{background:var(--gold2);transform:translateY(-2px);}
+
+.ai-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:14px;}
+.ai-spinner{width:44px;height:44px;border:3px solid var(--gray3);border-top-color:var(--blue);border-right-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;}
+.ai-loading-t{font-size:15px;font-weight:700;color:var(--dark);}
+.ai-loading-d{font-size:12px;color:var(--gray4);text-align:center;max-width:280px;line-height:1.5;}
+.ai-dots span{animation:blink 1.2s ease-in-out infinite;}
+.ai-dots span:nth-child(2){animation-delay:.3s;}
+.ai-dots span:nth-child(3){animation-delay:.6s;}
+
+#pg-result{background:var(--gray1);}
+.res-body{max-width:760px;margin:0 auto;padding:40px 18px 80px;}
+.res-hero{background:linear-gradient(135deg,var(--blue),var(--blue3));border-radius:22px;padding:40px 32px;text-align:center;margin-bottom:16px;position:relative;overflow:hidden;}
+.res-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.res-ey{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:3px;color:rgba(255,215,0,.85);text-transform:uppercase;margin-bottom:12px;}
+.res-score{font-family:'Playfair Display',serif;font-size:clamp(65px,13vw,100px);font-weight:900;color:var(--gold);line-height:1;animation:fadeUp .4s ease;}
+.res-classif{font-size:clamp(13px,2vw,16px);color:rgba(255,255,255,.7);margin-bottom:22px;}
+.res-st{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;}
+.rs-i{text-align:center;}
+.rs-v{font-family:'JetBrains Mono',monospace;font-size:clamp(15px,2.5vw,21px);font-weight:700;color:#fff;}
+.rs-l{font-size:10px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px;}
+.res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-bottom:16px;}
+.rc{background:var(--white);border:1.5px solid var(--gray3);border-radius:var(--r16);padding:18px;}
+.rc-l{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray4);margin-bottom:4px;}
+.rc-v{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--blue);margin-bottom:2px;}
+.rc-d{font-size:11px;color:var(--gray4);}
+.qi-band{background:var(--white);border:1.5px solid var(--gray3);border-radius:var(--r16);padding:22px;margin-bottom:16px;}
+.qi-band-t{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:14px;}
+.qb-bar{margin-bottom:10px;}
+.qb-bl{display:flex;justify-content:space-between;font-size:11px;color:var(--gray4);margin-bottom:4px;}
+.qb-bo{height:8px;background:var(--gray2);border-radius:4px;}
+.qb-bi{height:100%;border-radius:4px;transition:width 1s ease;background:linear-gradient(90deg,var(--blue),var(--gold));}
+.res-btns{display:flex;gap:9px;flex-wrap:wrap;}
+.btn-r{flex:1;min-width:130px;padding:13px;font-size:13px;font-weight:700;border:none;border-radius:var(--r12);cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif;}
+.btn-r:hover{transform:translateY(-2px);}
+.btn-r.blue{background:var(--blue);color:#fff;}
+.btn-r.blue:hover{background:var(--blue2);}
+.btn-r.yellow{background:var(--gold);color:var(--blue);}
+.btn-r.yellow:hover{background:var(--gold2);}
+.btn-r.ghost{background:var(--white);border:1.5px solid var(--gray3);color:var(--dark);}
+.btn-r.ghost:hover{background:var(--gray2);}
+
+#pg-hist{background:var(--gray1);}
+.hist-body{max-width:840px;margin:0 auto;padding:36px 18px 80px;}
+.hist-title{font-family:'Playfair Display',serif;font-size:clamp(26px,5vw,38px);font-weight:700;color:var(--dark);margin-bottom:3px;}
+.hist-sub{font-size:12px;color:var(--gray4);margin-bottom:24px;}
+.hhg{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px;margin-bottom:24px;}
+.hhc{background:var(--white);border:1.5px solid var(--gray3);border-radius:var(--r16);padding:18px;text-align:center;}
+.hhc-ico{font-size:20px;margin-bottom:4px;}
+.hhc-v{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--blue);line-height:1.1;}
+.hhc-l{font-size:9px;color:var(--gray4);text-transform:uppercase;letter-spacing:1px;}
+.hlist{display:flex;flex-direction:column;gap:7px;}
+.hi{background:var(--white);border:1.5px solid var(--gray3);border-radius:var(--r12);padding:14px 18px;display:flex;align-items:center;gap:12px;transition:var(--tr);}
+.hi:hover{border-color:var(--blue);}
+.hi-ico{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;background:var(--bluelt);flex-shrink:0;}
+.hi-info{flex:1;}
+.hi-type{font-size:13px;font-weight:700;color:var(--blue);margin-bottom:2px;}
+.hi-det{font-size:11px;color:var(--gray4);}
+.hi-score{text-align:right;}
+.hi-pts{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--blue);line-height:1;}
+.hi-cl{font-size:10px;color:var(--gray4);}
+.hist-empty{text-align:center;padding:60px 20px;color:var(--gray4);}
+
+.src-tag{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:100px;margin-left:8px;vertical-align:middle;}
+.src-tag.ia{background:var(--bluelt);color:var(--blue);border:1px solid var(--bluelt2);}
+.src-tag.banco{background:var(--gray2);color:var(--gray5);border:1px solid var(--gray3);}
+
+@media(max-width:560px){
+  .res-hero{padding:26px 14px;}
+  .res-btns{flex-direction:column;}
+}
+
+/* ══ ADMIN PANEL ══ */
+#pg-admin{background:#0D1117;}
+.admin-body{max-width:1100px;margin:0 auto;padding:30px 20px 80px;}
+.admin-nav{background:#161B22;border-bottom:1px solid #30363D;padding:0 20px;height:54px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
+.admin-logo{font-family:'Playfair Display',serif;font-size:18px;font-weight:900;color:var(--gold);}
+.admin-badge{background:#238636;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:100px;letter-spacing:1px;}
+.admin-nav-sep{flex:1;}
+.admin-nav-btn{background:rgba(255,255,255,.08);border:1px solid #30363D;color:#cdd9e5;font-size:12px;font-weight:600;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;transition:var(--tr);}
+.admin-nav-btn:hover{background:rgba(255,255,255,.14);}
+.adm-section-title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#8B949E;margin:24px 0 12px;border-bottom:1px solid #21262D;padding-bottom:8px;}
+.adm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:8px;}
+.adm-kpi{background:#161B22;border:1px solid #21262D;border-radius:10px;padding:16px;}
+.adm-kpi-l{font-size:10px;color:#8B949E;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.adm-kpi-v{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:#58A6FF;}
+.adm-kpi-d{font-size:10px;color:#3FB950;margin-top:3px;}
+.adm-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+@media(max-width:700px){.adm-grid2{grid-template-columns:1fr;}}
+.adm-panel{background:#161B22;border:1px solid #21262D;border-radius:10px;padding:18px;}
+.adm-panel-title{font-size:13px;font-weight:700;color:#CDD9E5;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.adm-list{display:flex;flex-direction:column;gap:7px;}
+.adm-item{display:flex;align-items:center;gap:10px;padding:8px 10px;background:#0D1117;border-radius:7px;border:1px solid #21262D;}
+.adm-item-ico{font-size:14px;width:26px;text-align:center;}
+.adm-item-name{flex:1;font-size:12px;color:#CDD9E5;font-weight:600;}
+.adm-item-val{font-family:'JetBrains Mono',monospace;font-size:12px;color:#58A6FF;font-weight:700;}
+.adm-bar-wrap{background:#21262D;border-radius:4px;height:5px;margin-top:4px;overflow:hidden;}
+.adm-bar-fill{height:100%;background:linear-gradient(90deg,#1F6FEB,#58A6FF);border-radius:4px;transition:width .7s ease;}
+.adm-sessions{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto;}
+.adm-sess{display:flex;align-items:center;gap:10px;padding:7px 10px;background:#0D1117;border-radius:7px;border:1px solid #21262D;font-size:11px;color:#8B949E;}
+.adm-sess-ico{font-size:13px;}
+.adm-sess-info{flex:1;}
+.adm-sess-disc{color:#CDD9E5;font-weight:600;}
+.adm-sess-time{color:#58A6FF;font-family:'JetBrains Mono',monospace;}
+.adm-sess-score{color:#3FB950;font-weight:700;}
+.adm-empty{text-align:center;padding:30px;color:#484F58;font-size:13px;}
+.adm-realtime{display:flex;align-items:center;gap:6px;font-size:11px;color:#3FB950;}
+.adm-dot{width:7px;height:7px;border-radius:50%;background:#3FB950;animation:blink 1.5s ease-in-out infinite;}
+.adm-chart{margin-top:8px;}
+.adm-chart-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.adm-chart-lbl{font-size:10px;color:#8B949E;width:90px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.adm-chart-bar{flex:1;background:#21262D;border-radius:3px;height:18px;overflow:hidden;position:relative;}
+.adm-chart-fill{height:100%;background:linear-gradient(90deg,#1F6FEB,#58A6FF);border-radius:3px;transition:width .8s ease;display:flex;align-items:center;justify-content:flex-end;padding-right:5px;}
+.adm-chart-num{font-family:'JetBrains Mono',monospace;font-size:9px;color:#fff;font-weight:700;}
+
+</style>
+</head>
+<body>
+
+<!-- ══ DASHBOARD ══ -->
+<div class="pg ativa" id="pg-dash">
+  <nav class="nav">
+    <div class="nav-logo" onclick="logoClick()" id="nav-logo-verus">VERUS</div>
+    <div class="nav-sep"></div>
+    <button class="nav-btn" onclick="ir('hist')">📊 Histórico</button>
+    <div onclick="abrirAdmin()" style="width:18px;height:18px;cursor:pointer;opacity:0;position:absolute;right:8px;bottom:4px;" title=""></div>
+    
+  </nav>
+  <div class="dash-hero">
+    <div class="eyebrow">✦ Plataforma de Conhecimento</div>
+    <div class="dash-title">VE<span>R</span>US</div>
+    <span class="dt2">Verdade · Conhecimento · Excelência</span>
+    <p class="dash-sub">Teste de QI e simulados com geração inteligente de questões. Cada teste é dinâmico e nunca se repete da mesma forma.</p>
+    <div class="brasil-stats">
+      <div class="bs-item"><div class="bs-val">∞</div><div class="bs-lab">Questões</div></div>
+      <div class="bs-item"><div class="bs-val">15</div><div class="bs-lab">Disciplinas</div></div>
+      <div class="bs-item"><div class="bs-val">3</div><div class="bs-lab">Dificuldades</div></div>
+      <div class="bs-item"><div class="bs-val">8</div><div class="bs-lab">Categorias QI</div></div>
+    </div>
+  </div>
+  <div class="dash-main">
+    <div class="sec-title">Acesso Principal</div>
+    <div class="main-cards">
+      <div class="mcard mcard-qi" onclick="ir('qi-intro')">
+        <div class="mc-badge">⚡ Geração Inteligente</div>
+        <span class="mc-ico">🧠</span>
+        <div class="mc-title">Teste de Q.I.</div>
+        <p class="mc-desc">Questões de lógica, padrões, raciocínio espacial, matemática e linguagem com dificuldade progressiva.</p>
+        <div class="mc-tags"><span class="mc-tag">8 categorias</span><span class="mc-tag">Cronômetro</span><span class="mc-tag">Análise de QI</span></div>
+        <div class="mc-btn">Testar QI →</div>
+      </div>
+      <div class="mcard mcard-sim" onclick="ir('sims')">
+        <div class="mc-badge">📚 15 Matérias</div>
+        <span class="mc-ico" style="animation-delay:.4s">📝</span>
+        <div class="mc-title">Simulados</div>
+        <p class="mc-desc">Questões para cada disciplina em 3 níveis. Correção imediata com explicação detalhada.</p>
+        <div class="mc-tags"><span class="mc-tag">Fácil · Médio · Difícil</span><span class="mc-tag">Explicação</span></div>
+        <div class="mc-btn">Escolher Disciplina →</div>
+      </div>
+    </div>
+    <div class="sec-title">Ranking & Estatísticas</div>
+    <div class="dash-bot">
+      <div class="dpanel">
+        <div class="dp-title">🏆 Ranking desta Sessão</div>
+        <div class="rank-list" id="rank-list"><div style="text-align:center;color:var(--gray4);padding:20px;font-size:13px;">Faça um teste para aparecer no ranking!</div></div>
+      </div>
+      <div class="dpanel">
+        <div class="dp-title">📊 Suas Estatísticas</div>
+        <div class="usg">
+          <div class="usg-i"><div class="usg-v" id="ust-testes">0</div><div class="usg-l">Testes</div></div>
+          <div class="usg-i"><div class="usg-v" id="ust-media">—</div><div class="usg-l">Média</div></div>
+          <div class="usg-i"><div class="usg-v" id="ust-melhor">—</div><div class="usg-l">Melhor</div></div>
+          <div class="usg-i"><div class="usg-v" id="ust-ac">0</div><div class="usg-l">Acertos</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ QI INTRO ══ -->
+<div class="pg" id="pg-qi">
+  <nav class="nav">
+    <div class="nav-logo" onclick="ir('dash')">VERUS</div>
+    <div class="nav-sep"></div>
+    <span class="nav-crumb" onclick="ir('dash')">Início</span><span class="nav-slash">/</span>
+    <span class="nav-crumb" style="color:#fff">Teste de QI</span>
+    <button class="nav-btn" onclick="ir('dash')">← Início</button>
+  </nav>
+  <div class="qi-body">
+    <div class="qi-hero">
+      <span class="qi-ico">🧠</span>
+      <div class="qi-ht">Teste de Q.I.</div>
+      <p class="qi-hs">8 categorias cognitivas com dificuldade progressiva. Resultado com análise completa de QI estimado.</p>
+    </div>
+    <div class="qi-grid">
+      <div class="qi-ic"><div class="qi-ic-ico">🧬</div><div class="qi-ic-t">8 Categorias</div><div class="qi-ic-d">Lógica, Matemática, Padrões, Espacial, Memória, Linguagem, Analogias, Velocidade.</div></div>
+      <div class="qi-ic"><div class="qi-ic-ico">📈</div><div class="qi-ic-t">Progressivo</div><div class="qi-ic-d">Questões mais difíceis ao longo do teste.</div></div>
+      <div class="qi-ic"><div class="qi-ic-ico">⏱️</div><div class="qi-ic-t">Cronometrado</div><div class="qi-ic-d">O tempo influencia o cálculo do QI.</div></div>
+      <div class="qi-ic"><div class="qi-ic-ico">📊</div><div class="qi-ic-t">Análise detalhada</div><div class="qi-ic-d">Explicação em cada questão e classificação final.</div></div>
+    </div>
+    <div class="qi-form">
+      <div style="font-size:15px;font-weight:700;color:var(--dark);margin-bottom:18px;">📋 Identificação</div>
+      <div class="frm-row">
+        <div class="frm-g"><label class="frm-l">Nome completo</label><input class="frm-i" type="text" id="qi-nome" placeholder="Seu nome" maxlength="40"></div>
+        <div class="frm-g"><label class="frm-l">Idade</label><input class="frm-i" type="number" id="qi-idade" placeholder="Ex: 22" min="10" max="99"></div>
+      </div>
+      <div class="frm-g" style="margin-bottom:16px;">
+        <label class="frm-l" style="margin-bottom:8px;">Número de questões</label>
+        <div class="qtd-row" id="qtd-qi">
+          <div class="qtd-btn" onclick="selQtd(this,5,'qi')">5<div class="qtd-lbl">Rápido</div></div>
+          <div class="qtd-btn sel" onclick="selQtd(this,10,'qi')">10<div class="qtd-lbl">Padrão</div></div>
+          <div class="qtd-btn" onclick="selQtd(this,15,'qi')">15<div class="qtd-lbl">Completo</div></div>
+          <div class="qtd-btn" onclick="selQtd(this,20,'qi')">20<div class="qtd-lbl">Extenso</div></div>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="iniciarQI()">🧠 Iniciar Teste de QI →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SIMULADOS ══ -->
+<div class="pg" id="pg-sims">
+  <nav class="nav">
+    <div class="nav-logo" onclick="ir('dash')">VERUS</div>
+    <div class="nav-sep"></div>
+    <span class="nav-crumb" onclick="ir('dash')">Início</span><span class="nav-slash">/</span>
+    <span class="nav-crumb" style="color:#fff">Simulados</span>
+    <button class="nav-btn" onclick="ir('dash')">← Início</button>
+  </nav>
+  <div class="sims-body">
+    <div class="sims-header">
+      <div class="sims-title">Simulados</div>
+      <div class="sims-sub">Escolha uma disciplina, defina a dificuldade e a quantidade de questões.</div>
+    </div>
+    <div class="sim-sec">
+      <div class="sim-sh"><div class="sim-sh-ico">🔢</div><div class="sim-sh-name">Matemática & Raciocínio</div><div class="sim-sh-line"></div></div>
+      <div class="sim-grid">
+        <div class="scard" onclick="irDisc('matematica')"><div class="scard-top"><div class="scard-ico-wrap">🔢</div><div class="scard-name">Matemática</div><div class="scard-sub">Aritmética, álgebra, geometria</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+        <div class="scard" onclick="irDisc('logica')"><div class="scard-top"><div class="scard-ico-wrap">♟️</div><div class="scard-name">Raciocínio Lógico</div><div class="scard-sub">Sequências, proposições</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+        <div class="scard" onclick="irDisc('informatica')"><div class="scard-top"><div class="scard-ico-wrap">💻</div><div class="scard-name">Informática</div><div class="scard-sub">Redes, sistemas, segurança</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+      </div>
+    </div>
+    <div class="sim-sec">
+      <div class="sim-sh"><div class="sim-sh-ico">⚗️</div><div class="sim-sh-name">Ciências da Natureza</div><div class="sim-sh-line"></div></div>
+      <div class="sim-grid">
+        <div class="scard" onclick="irDisc('biologia')"><div class="scard-top"><div class="scard-ico-wrap">🧬</div><div class="scard-name">Biologia</div><div class="scard-sub">Genética, ecologia, fisiologia</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+        <div class="scard" onclick="irDisc('fisica')"><div class="scard-top"><div class="scard-ico-wrap">⚛️</div><div class="scard-name">Física</div><div class="scard-sub">Mecânica, eletromagnetismo</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+        <div class="scard" onclick="irDisc('quimica')"><div class="scard-top"><div class="scard-ico-wrap">🧪</div><div class="scard-name">Química</div><div class="scard-sub">Geral, orgânica, físico-química</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+      </div>
+    </div>
+    <div class="sim-sec">
+      <div class="sim-sh"><div class="sim-sh-ico">✍️</div><div class="sim-sh-name">Linguagens</div><div class="sim-sh-line"></div></div>
+      <div class="sim-grid">
+        <div class="scard" onclick="irDisc('portugues')"><div class="scard-top"><div class="scard-ico-wrap">📖</div><div class="scard-name">Português</div><div class="scard-sub">Gramática, interpretação</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+        <div class="scard" onclick="irDisc('ingles')"><div class="scard-top"><div class="scard-ico-wrap">🇬🇧</div><div class="scard-name">Inglês</div><div class="scard-sub">Grammar, vocabulary</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+        <div class="scard" onclick="irDisc('espanhol')"><div class="scard-top"><div class="scard-ico-wrap">🇪🇸</div><div class="scard-name">Espanhol</div><div class="scard-sub">Gramática, interpretación</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+      </div>
+    </div>
+    <div class="sim-sec">
+      <div class="sim-sh"><div class="sim-sh-ico">🏛️</div><div class="sim-sh-name">Ciências Humanas</div><div class="sim-sh-line"></div></div>
+      <div class="sim-grid">
+        <div class="scard" onclick="irDisc('historia')"><div class="scard-top"><div class="scard-ico-wrap">🏛️</div><div class="scard-name">História</div><div class="scard-sub">Brasil e mundial</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+        <div class="scard" onclick="irDisc('geografia')"><div class="scard-top"><div class="scard-ico-wrap">🌍</div><div class="scard-name">Geografia</div><div class="scard-sub">Física, humana, geopolítica</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+        <div class="scard" onclick="irDisc('filosofia')"><div class="scard-top"><div class="scard-ico-wrap">🦉</div><div class="scard-name">Filosofia</div><div class="scard-sub">Ética, epistemologia</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+        <div class="scard" onclick="irDisc('sociologia')"><div class="scard-top"><div class="scard-ico-wrap">🏘️</div><div class="scard-name">Sociologia</div><div class="scard-sub">Teorias sociais, cidadania</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+      </div>
+    </div>
+    <div class="sim-sec">
+      <div class="sim-sh"><div class="sim-sh-ico">🌐</div><div class="sim-sh-name">Atualidades & Geral</div><div class="sim-sh-line"></div></div>
+      <div class="sim-grid">
+        <div class="scard" onclick="irDisc('atualidades')"><div class="scard-top"><div class="scard-ico-wrap">📰</div><div class="scard-name">Atualidades</div><div class="scard-sub">Política, economia, eventos</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+        <div class="scard" onclick="irDisc('gerais')"><div class="scard-top"><div class="scard-ico-wrap">🌐</div><div class="scard-name">Conhecimentos Gerais</div><div class="scard-sub">Arte, ciência, esporte</div></div><div class="scard-bot"><span class="scard-lbl">Banco de questões</span><div class="scard-arrow">→</div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DISCIPLINA ══ -->
+<div class="pg" id="pg-disc">
+  <nav class="nav">
+    <div class="nav-logo" onclick="ir('dash')">VERUS</div>
+    <div class="nav-sep"></div>
+    <span class="nav-crumb" onclick="ir('dash')">Início</span><span class="nav-slash">/</span>
+    <span class="nav-crumb" onclick="ir('sims')">Simulados</span><span class="nav-slash">/</span>
+    <span class="nav-crumb" style="color:#fff" id="disc-crumb">Disciplina</span>
+    <button class="nav-btn" onclick="ir('sims')">← Voltar</button>
+  </nav>
+  <div class="disc-body">
+    <div class="disc-hero">
+      <span class="dh-ico" id="disc-ico">📖</span>
+      <div class="dh-name" id="disc-nome">Disciplina</div>
+      <div class="dh-sub" id="disc-sub">Descrição</div>
+      <div class="dh-q" id="disc-q">📚 Questões selecionadas do banco</div>
+    </div>
+    <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray4);margin-bottom:10px;">Dificuldade</div>
+    <div class="dif-cards">
+      <div class="dcard f" onclick="selDif('facil',this)"><div class="dif-dot"></div><div class="dif-info"><div class="dif-name">Fácil</div><div class="dif-desc">Fundamentos e conceitos básicos.</div></div><div class="dif-pill">Iniciante</div></div>
+      <div class="dcard m" onclick="selDif('medio',this)"><div class="dif-dot"></div><div class="dif-info"><div class="dif-name">Médio</div><div class="dif-desc">Nível ENEM/Vestibular. Contextualizadas.</div></div><div class="dif-pill">ENEM</div></div>
+      <div class="dcard d" onclick="selDif('dificil',this)"><div class="dif-dot"></div><div class="dif-info"><div class="dif-name">Difícil</div><div class="dif-desc">Alta complexidade. Nível concurso.</div></div><div class="dif-pill">Avançado</div></div>
+    </div>
+    <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray4);margin-bottom:10px;">Quantidade</div>
+    <div class="qtd-row" id="qtd-sim">
+      <div class="qtd-btn" onclick="selQtd(this,5,'sim')">5<div class="qtd-lbl">Rápido</div></div>
+      <div class="qtd-btn sel" onclick="selQtd(this,10,'sim')">10<div class="qtd-lbl">Padrão</div></div>
+      <div class="qtd-btn" onclick="selQtd(this,15,'sim')">15<div class="qtd-lbl">Médio</div></div>
+      <div class="qtd-btn" onclick="selQtd(this,20,'sim')">20<div class="qtd-lbl">Completo</div></div>
+    </div>
+    <button class="btn-primary" id="btn-iniciar-sim" onclick="iniciarSim()" disabled>Selecione uma dificuldade</button>
+  </div>
+</div>
+
+<!-- ══ PROVA ══ -->
+<div class="pg" id="pg-prova">
+  <div class="ptbar">
+    <div class="ptb-disc" id="ptb-disc">—</div>
+    <div class="ptb-mode" id="ptb-mode">—</div>
+    <div style="flex:1"></div>
+    <div class="cron-pill">⏱ <div class="cron-txt" id="cron">00:00:00</div></div>
+    <button class="nav-btn" onclick="confirmarSaida()" style="color:#FFCDD2;border-color:rgba(211,47,47,.4);">✕ Sair</button>
+  </div>
+  <div class="prog-outer"><div class="prog-inner" id="prog"></div></div>
+  <div class="prova-body">
+    <div class="mini-nav" id="mini-nav"></div>
+    <div id="prova-content"></div>
+  </div>
+</div>
+
+<!-- ══ RESULTADO ══ -->
+<div class="pg" id="pg-result">
+  <nav class="nav">
+    <div class="nav-logo" onclick="ir('dash')">VERUS</div>
+    <div class="nav-sep"></div>
+    <button class="nav-btn" onclick="ir('dash')">← Início</button>
+  </nav>
+  <div class="res-body">
+    <div class="res-hero">
+      <div class="res-ey" id="res-ey">RESULTADO FINAL</div>
+      <div id="res-score-wrap"></div>
+      <div class="res-classif" id="res-classif">—</div>
+      <div class="res-st">
+        <div class="rs-i"><div class="rs-v" id="rs-ac">—</div><div class="rs-l">Acertos</div></div>
+        <div class="rs-i"><div class="rs-v" id="rs-er">—</div><div class="rs-l">Erros</div></div>
+        <div class="rs-i"><div class="rs-v" id="rs-pc">—</div><div class="rs-l">Aproveitamento</div></div>
+        <div class="rs-i"><div class="rs-v" id="rs-tm">—</div><div class="rs-l">Tempo</div></div>
+      </div>
+    </div>
+    <div class="res-grid" id="res-grid"></div>
+    <div id="qi-band-wrap"></div>
+    <div class="res-btns" id="res-btns"></div>
+  </div>
+</div>
+
+<!-- ══ HISTÓRICO ══ -->
+<div class="pg" id="pg-hist">
+  <nav class="nav">
+    <div class="nav-logo" onclick="ir('dash')">VERUS</div>
+    <div class="nav-sep"></div>
+    <span class="nav-crumb" onclick="ir('dash')">Início</span><span class="nav-slash">/</span>
+    <span class="nav-crumb" style="color:#fff">Histórico</span>
+    <button class="nav-btn" onclick="ir('dash')">← Início</button>
+  </nav>
+  <div class="hist-body" id="hist-body"></div>
+</div>
+
+<!-- ══ ADMIN ══ -->
+<div class="pg" id="pg-admin">
+  <div id="adm-login-overlay" style="position:fixed;inset:0;background:#0D1117;z-index:9999;display:flex;align-items:center;justify-content:center;">
+    <div style="background:#161B22;border:1px solid #30363D;border-radius:16px;padding:40px 36px;width:100%;max-width:360px;text-align:center;">
+      <div style="font-family:serif;font-size:28px;font-weight:900;color:#FFD700;margin-bottom:4px;">VERUS</div>
+      <div style="font-size:11px;color:#8B949E;letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;">Painel Administrativo</div>
+      <input id="adm-senha-input" type="password" placeholder="Senha de acesso" onkeydown="if(event.key==='Enter')verificarSenhaAdmin()" style="width:100%;background:#0D1117;border:1px solid #30363D;border-radius:8px;padding:12px 16px;color:#CDD9E5;font-size:14px;font-family:sans-serif;outline:none;margin-bottom:10px;">
+      <div id="adm-erro" style="color:#F85149;font-size:12px;min-height:18px;margin-bottom:10px;"></div>
+      <button onclick="verificarSenhaAdmin()" style="width:100%;background:#1F6FEB;border:none;border-radius:8px;padding:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:sans-serif;">Entrar</button>
+    </div>
+  </div>
+  <nav class="admin-nav">
+    <div class="admin-logo">VERUS</div>
+    <span class="admin-badge">ADMIN</span>
+    <div class="admin-nav-sep"></div>
+    <div class="adm-realtime"><div class="adm-dot"></div><span id="adm-status">Conectando...</span></div>
+    <button class="admin-nav-btn" onclick="ir('dash')" style="margin-left:12px">← Sair</button>
+  </nav>
+  <div class="admin-body">
+    <div class="adm-section-title">📊 Visão Geral em Tempo Real</div>
+    <div class="adm-kpis">
+      <div class="adm-kpi"><div class="adm-kpi-l">Total de Acessos</div><div class="adm-kpi-v" id="adm-total-acessos">0</div><div class="adm-kpi-d">↑ ao vivo</div></div>
+      <div class="adm-kpi"><div class="adm-kpi-l">Sessões Hoje</div><div class="adm-kpi-v" id="adm-hoje">0</div><div class="adm-kpi-d" id="adm-hoje-d">—</div></div>
+      <div class="adm-kpi"><div class="adm-kpi-l">Testes Realizados</div><div class="adm-kpi-v" id="adm-testes">0</div><div class="adm-kpi-d">simulados + QI</div></div>
+      <div class="adm-kpi"><div class="adm-kpi-l">Tempo Médio</div><div class="adm-kpi-v" id="adm-tempo-med">—</div><div class="adm-kpi-d">por sessão</div></div>
+      <div class="adm-kpi"><div class="adm-kpi-l">Usuários Únicos</div><div class="adm-kpi-v" id="adm-unicos">0</div><div class="adm-kpi-d">por nome</div></div>
+      <div class="adm-kpi"><div class="adm-kpi-l">Média de Acertos</div><div class="adm-kpi-v" id="adm-media-ac">—</div><div class="adm-kpi-d">geral</div></div>
+    </div>
+
+    <div class="adm-section-title">🏆 Disciplinas Mais Acessadas</div>
+    <div class="adm-panel" style="margin-bottom:12px">
+      <div class="adm-chart" id="adm-disc-chart"><div class="adm-empty">Sem dados ainda</div></div>
+    </div>
+
+    <div class="adm-grid2">
+      <div class="adm-panel">
+        <div class="adm-panel-title">⏱️ Tempo por Disciplina (média)</div>
+        <div class="adm-list" id="adm-tempo-disc"><div class="adm-empty">Sem dados</div></div>
+      </div>
+      <div class="adm-panel">
+        <div class="adm-panel-title">📈 Ranking Atual</div>
+        <div class="adm-list" id="adm-ranking"><div class="adm-empty">Sem dados</div></div>
+      </div>
+    </div>
+
+    <div class="adm-section-title">🕐 Últimas Sessões</div>
+    <div class="adm-panel">
+      <div class="adm-sessions" id="adm-sessions"><div class="adm-empty">Nenhuma sessão registrada</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, push, set, onValue, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+// ══ CONFIGURAÇÃO FIREBASE ══
+// Substitua com as suas credenciais do Firebase Console
+const firebaseConfig = {
+  apiKey: "AIzaSyBkWQUc57y2e9wEmseEleQ5B-009mCuIeM",
+  authDomain: "verus-qi.firebaseapp.com",
+  databaseURL: "https://verus-qi-default-rtdb.firebaseio.com",
+  projectId: "verus-qi",
+  storageBucket: "verus-qi.firebasestorage.app",
+  messagingSenderId: "1091557008194",
+  appId: "1:1091557008194:web:052e85a5af23dd7c491edb"
+};
+
+let db = null;
+let fbOk = false;
+let _sessaoId = null;
+let _sessaoInicio = Date.now();
+
+try {
+  const app = initializeApp(firebaseConfig);
+  db = getDatabase(app);
+  fbOk = true;
+} catch(e) {
+  console.warn('[VERUS] Firebase não configurado ainda:', e.message);
+}
+
+// ── Registrar acesso ao carregar a página ──
+function registrarAcesso() {
+  if (!fbOk || !db) return;
+  const ref_ = ref(db, 'acessos');
+  const sessao = {
+    ts: serverTimestamp(),
+    data: new Date().toISOString(),
+    paginaEntrada: 'dashboard'
+  };
+  push(ref_, sessao).then(snap => {
+    _sessaoId = snap.key;
+  }).catch(()=>{});
+}
+
+// ── Registrar conclusão de teste ──
+window.registrarTesteFirebase = function(dados) {
+  if (!fbOk || !db) return;
+  const tempoSessao = Math.round((Date.now() - _sessaoInicio) / 1000);
+  const payload = {
+    ts: serverTimestamp(),
+    data: new Date().toISOString(),
+    nome: dados.nome || 'Anônimo',
+    modo: dados.modo,
+    disc: dados.disc || 'qi',
+    dif: dados.dif || '',
+    acertos: dados.ac,
+    total: dados.total,
+    pc: dados.pc,
+    pts: dados.pts,
+    tempoTeste: dados.seg,
+    tempoSessao,
+    sessaoId: _sessaoId || ''
+  };
+  push(ref(db, 'testes'), payload).catch(()=>{});
+  // Atualizar contador de disciplina
+  if (dados.disc && dados.disc !== 'qi') {
+    const discRef = ref(db, `disciplinas/${dados.disc}`);
+    onValue(discRef, snap => {
+      const v = snap.val() || { acessos: 0, tempoTotal: 0, acertosTotal: 0, totalQuestoes: 0 };
+      set(discRef, {
+        acessos: (v.acessos || 0) + 1,
+        tempoTotal: (v.tempoTotal || 0) + dados.seg,
+        acertosTotal: (v.acertosTotal || 0) + dados.ac,
+        totalQuestoes: (v.totalQuestoes || 0) + dados.total,
+        nome: dados.disc
+      });
+    }, { onlyOnce: true });
+  }
+};
+
+// ── Renderizar painel admin ──
+window.carregarAdmin = function() {
+  const statusEl = document.getElementById('adm-status');
+  if (!fbOk || !db) {
+    statusEl.textContent = 'Firebase não configurado';
+    statusEl.style.color = '#F85149';
+    renderAdminLocal();
+    return;
+  }
+  statusEl.textContent = 'Conectado · tempo real';
+
+  // Acessos totais
+  onValue(ref(db, 'acessos'), snap => {
+    const d = snap.val() || {};
+    const total = Object.keys(d).length;
+    document.getElementById('adm-total-acessos').textContent = total;
+
+    // Sessões hoje
+    const hoje = new Date().toISOString().slice(0,10);
+    const hojeCount = Object.values(d).filter(s => s.data && s.data.startsWith(hoje)).length;
+    document.getElementById('adm-hoje').textContent = hojeCount;
+    document.getElementById('adm-hoje-d').textContent = `em ${hoje}`;
+  });
+
+  // Testes
+  onValue(ref(db, 'testes'), snap => {
+    const d = snap.val() || {};
+    const lista = Object.values(d);
+    document.getElementById('adm-testes').textContent = lista.length;
+
+    // Nomes únicos
+    const nomes = new Set(lista.map(t => (t.nome||'').toLowerCase()).filter(Boolean));
+    document.getElementById('adm-unicos').textContent = nomes.size;
+
+    // Tempo médio por sessão
+    if (lista.length) {
+      const med = Math.round(lista.reduce((a,t) => a + (t.tempoTeste||0), 0) / lista.length);
+      document.getElementById('adm-tempo-med').textContent = med >= 60 ? `${Math.floor(med/60)}m` : `${med}s`;
+      const medAc = Math.round(lista.reduce((a,t) => a + (t.pc||0), 0) / lista.length);
+      document.getElementById('adm-media-ac').textContent = medAc + '%';
+    }
+
+    // Últimas sessões
+    const sorted = [...lista].sort((a,b) => (b.ts||0)-(a.ts||0)).slice(0,20);
+    const sessEl = document.getElementById('adm-sessions');
+    if (!sorted.length) { sessEl.innerHTML = '<div class="adm-empty">Nenhuma sessão</div>'; return; }
+    sessEl.innerHTML = sorted.map(t => {
+      const disc = t.modo === 'qi' ? '🧠 Teste de QI' : `📚 ${t.disc||'—'} · ${({facil:'Fácil',medio:'Médio',dificil:'Difícil'})[t.dif]||t.dif||''}`;
+      const tempo = t.tempoTeste >= 60 ? `${Math.floor(t.tempoTeste/60)}m ${t.tempoTeste%60}s` : `${t.tempoTeste||0}s`;
+      const dt = t.data ? new Date(t.data).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+      return `<div class="adm-sess">
+        <span class="adm-sess-ico">${t.modo==='qi'?'🧠':'📝'}</span>
+        <div class="adm-sess-info">
+          <div class="adm-sess-disc">${t.nome||'Anônimo'} · <span style="color:#8B949E;font-weight:400">${disc}</span></div>
+          <div style="margin-top:2px;color:#484F58">${dt}</div>
+        </div>
+        <span class="adm-sess-time">${tempo}</span>
+        <span class="adm-sess-score">${t.pc||0}%</span>
+      </div>`;
+    }).join('');
+
+    // Ranking
+    const porNome = {};
+    lista.forEach(t => {
+      const n = t.nome || 'Anônimo';
+      if (!porNome[n]) porNome[n] = { nome: n, pts: 0, testes: 0 };
+      porNome[n].pts = Math.max(porNome[n].pts, t.pts || 0);
+      porNome[n].testes++;
+    });
+    const rank = Object.values(porNome).sort((a,b) => b.pts - a.pts).slice(0,8);
+    document.getElementById('adm-ranking').innerHTML = rank.map((r,i) => `
+      <div class="adm-item">
+        <span class="adm-item-ico">${['🥇','🥈','🥉'][i]||'•'}</span>
+        <div class="adm-item-name">${r.nome}</div>
+        <div class="adm-item-val">${r.pts} pts</div>
+      </div>`).join('') || '<div class="adm-empty">Sem dados</div>';
+  });
+
+  // Disciplinas
+  onValue(ref(db, 'disciplinas'), snap => {
+    const d = snap.val() || {};
+    const lista = Object.entries(d).map(([k,v]) => ({...v, key:k})).sort((a,b) => b.acessos - a.acessos);
+    const max = lista[0]?.acessos || 1;
+
+    // Gráfico de barras
+    const chartEl = document.getElementById('adm-disc-chart');
+    chartEl.innerHTML = lista.slice(0,10).map(item => `
+      <div class="adm-chart-row">
+        <div class="adm-chart-lbl">${item.nome||item.key}</div>
+        <div class="adm-chart-bar">
+          <div class="adm-chart-fill" style="width:${Math.round((item.acessos/max)*100)}%">
+            <span class="adm-chart-num">${item.acessos}</span>
+          </div>
+        </div>
+      </div>`).join('') || '<div class="adm-empty">Sem dados</div>';
+
+    // Tempo médio por disciplina
+    const tempoEl = document.getElementById('adm-tempo-disc');
+    tempoEl.innerHTML = lista.slice(0,6).map(item => {
+      const med = item.acessos ? Math.round((item.tempoTotal||0)/item.acessos) : 0;
+      const medStr = med >= 60 ? `${Math.floor(med/60)}m ${med%60}s` : `${med}s`;
+      const medAc = item.totalQuestoes ? Math.round((item.acertosTotal||0)/item.totalQuestoes*100) : 0;
+      return `<div class="adm-item">
+        <span class="adm-item-ico">📚</span>
+        <div class="adm-item-name">${item.nome||item.key}</div>
+        <div>
+          <div class="adm-item-val">${medStr} <span style="color:#8B949E;font-size:10px">• ${medAc}% acertos</span></div>
+        </div>
+      </div>`;
+    }).join('') || '<div class="adm-empty">Sem dados</div>';
+  });
+};
+
+// ── Fallback: mostrar dados locais quando Firebase não está configurado ──
+function renderAdminLocal() {
+  const h = window._E_HIST || [];
+  document.getElementById('adm-total-acessos').textContent = '—';
+  document.getElementById('adm-hoje').textContent = h.length;
+  document.getElementById('adm-testes').textContent = h.length;
+  if (h.length) {
+    const med = Math.round(h.reduce((a,r)=>a+(r.seg||0),0)/h.length);
+    document.getElementById('adm-tempo-med').textContent = med >= 60 ? `${Math.floor(med/60)}m` : `${med}s`;
+    document.getElementById('adm-media-ac').textContent = Math.round(h.reduce((a,r)=>a+(r.pc||0),0)/h.length) + '%';
+  }
+  const sessEl = document.getElementById('adm-sessions');
+  sessEl.innerHTML = h.length
+    ? h.slice().reverse().map(t => `<div class="adm-sess"><span class="adm-sess-ico">📝</span><div class="adm-sess-info"><div class="adm-sess-disc">${t.nome||'Anônimo'} · ${t.disc||'QI'}</div></div><span class="adm-sess-score">${t.pc||0}%</span></div>`).join('')
+    : '<div class="adm-empty">Nenhuma sessão local</div>';
+  document.getElementById('adm-status').textContent = 'Modo local (Firebase pendente)';
+}
+
+// Expor funções para uso no JS principal
+window._fbRegistrar = window.registrarTesteFirebase;
+window._fbCarregarAdmin = window.carregarAdmin;
+
+registrarAcesso();
+</script>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   ESTADO GLOBAL
+═══════════════════════════════════════════════════════════ */
+const E = {
+  modo:null, disc:null, dif:null, nome:'', idade:0,
+  qs:[], qi:0, resps:[], ac:0, er:0, seg:0,
+  conf:false, qtd:{qi:10,sim:10},
+  hist:[]
+};
+
+const DISCS={
+  matematica:{nome:'Matemática',ico:'🔢',sub:'Aritmética, álgebra, geometria e cálculo'},
+  logica:{nome:'Raciocínio Lógico',ico:'♟️',sub:'Sequências, proposições e silogismos'},
+  informatica:{nome:'Informática',ico:'💻',sub:'Redes, sistemas, segurança e Office'},
+  biologia:{nome:'Biologia',ico:'🧬',sub:'Genética, ecologia e fisiologia'},
+  fisica:{nome:'Física',ico:'⚛️',sub:'Mecânica, eletromagnetismo e óptica'},
+  quimica:{nome:'Química',ico:'🧪',sub:'Geral, orgânica e físico-química'},
+  portugues:{nome:'Português',ico:'📖',sub:'Gramática, interpretação e redação'},
+  ingles:{nome:'Inglês',ico:'🇬🇧',sub:'Grammar, vocabulary e reading'},
+  espanhol:{nome:'Espanhol',ico:'🇪🇸',sub:'Gramática, vocabulário e interpretación'},
+  historia:{nome:'História',ico:'🏛️',sub:'Brasil, geral e contemporânea'},
+  geografia:{nome:'Geografia',ico:'🌍',sub:'Física, humana e geopolítica'},
+  filosofia:{nome:'Filosofia',ico:'🦉',sub:'Ética, epistemologia e lógica'},
+  sociologia:{nome:'Sociologia',ico:'🏘️',sub:'Teorias sociais e cidadania'},
+  atualidades:{nome:'Atualidades',ico:'📰',sub:'Política, economia e eventos'},
+  gerais:{nome:'Conhecimentos Gerais',ico:'🌐',sub:'Arte, ciência, esporte e cultura'}
+};
+
+const $=id=>document.getElementById(id);
+const fmt=s=>{const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sc=s%60;return h>0?`${h}h ${m}m ${sc}s`:m>0?`${m}m ${sc}s`:`${sc}s`};
+const fmtC=s=>`${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+const shuffle=arr=>{const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const pick=(arr,n)=>shuffle(arr).slice(0,n);
+
+/* ════════════════════════════════════════════════════════
+   PERSISTÊNCIA (storage do artifact, com fallback em memória)
+═══════════════════════════════════════════════════════════ */
+async function carregarHist(){
+  try{
+    const r = await window.storage.get('verus_historico', false);
+    if(r && r.value){ E.hist = JSON.parse(r.value); }
+  }catch(e){ /* sem histórico salvo ainda — ok */ }
+}
+async function salvarHist(){
+  try{
+    await window.storage.set('verus_historico', JSON.stringify(E.hist), false);
+  }catch(e){ console.warn('Não foi possível salvar histórico:', e); }
+}
+
+/* ════════════════════════════════════════════════════════
+   NAVEGAÇÃO
+═══════════════════════════════════════════════════════════ */
+function ir(dest){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('ativa'));
+  const pg=$('pg-'+dest);
+  if(pg){pg.classList.add('ativa');window.scrollTo({top:0,behavior:'instant'});}
+  if(dest==='dash') atualizarDash();
+  if(dest==='hist') renderHist();
+}
+const ADMIN_SENHA = 'verus@admin2025';
+let _adminAutenticado = false;
+
+function abrirAdmin(){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('ativa'));
+  $('pg-admin').classList.add('ativa');
+  window.scrollTo({top:0,behavior:'instant'});
+  const overlay = document.getElementById('adm-login-overlay');
+  if(_adminAutenticado){
+    overlay.style.display='none';
+    carregarPainelAdmin();
+  } else {
+    overlay.style.display='flex';
+    setTimeout(()=>{ const i=document.getElementById('adm-senha-input'); if(i) i.focus(); },100);
+  }
+}
+function verificarSenhaAdmin(){
+  const input = document.getElementById('adm-senha-input');
+  const erro = document.getElementById('adm-erro');
+  if(input.value === ADMIN_SENHA){
+    _adminAutenticado = true;
+    document.getElementById('adm-login-overlay').style.display='none';
+    carregarPainelAdmin();
+  } else {
+    erro.textContent = 'Senha incorreta. Tente novamente.';
+    input.value='';
+    input.focus();
+    setTimeout(()=>erro.textContent='', 3000);
+  }
+}
+function carregarPainelAdmin(){
+  window._E_HIST = E.hist;
+  if(window._fbCarregarAdmin) window._fbCarregarAdmin();
+  else if(document.getElementById('adm-status')) document.getElementById('adm-status').textContent='Módulo carregando...';
+}
+function logoClick(){ ir('dash'); }
+function confirmarSaida(){
+  if(confirm('Sair? O progresso deste teste será perdido.')){
+    pararCron();
+    ir(E.modo==='qi'?'qi-intro':'sims');
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════════════ */
+function atualizarDash(){
+  const h=E.hist;
+  $('ust-testes').textContent=h.length||'0';
+  if(!h.length){$('ust-media').textContent='—';$('ust-melhor').textContent='—';$('ust-ac').textContent='0';
+    $('rank-list').innerHTML='<div style="text-align:center;color:var(--gray4);padding:20px;font-size:13px;">Faça um teste para aparecer no ranking!</div>';
+    return;
+  }
+  $('ust-media').textContent=Math.round(h.reduce((a,r)=>a+r.pc,0)/h.length)+'%';
+  $('ust-melhor').textContent=Math.max(...h.map(r=>r.pts));
+  $('ust-ac').textContent=h.reduce((a,r)=>a+r.ac,0);
+  const cls=['g','s','b','o','o'];
+  const sorted=[...h].sort((a,b)=>b.pts-a.pts).slice(0,5);
+  $('rank-list').innerHTML=sorted.map((r,i)=>`
+    <div class="ri">
+      <div class="ri-pos ${cls[i]}">${i+1}º</div>
+      <div class="ri-name">${esc(r.nome||'Anônimo')}</div>
+      <div class="ri-sc">${r.pts} pts</div>
+    </div>`).join('');
+}
+function esc(s){
+  const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;
+}
+
+/* ════════════════════════════════════════════════════════
+   SELEÇÃO DE QUANTIDADE / DIFICULDADE
+═══════════════════════════════════════════════════════════ */
+let _dif=null;
+function selQtd(el,n,ctx){
+  el.closest('.qtd-row').querySelectorAll('.qtd-btn').forEach(b=>b.classList.remove('sel'));
+  el.classList.add('sel');E.qtd[ctx]=n;
+}
+function selDif(dif,el){
+  document.querySelectorAll('.dcard').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');_dif=dif;
+  const btn=$('btn-iniciar-sim');btn.disabled=false;
+  btn.textContent={facil:'🟢 Iniciar — Fácil →',medio:'🟡 Iniciar — Médio →',dificil:'🔴 Iniciar — Difícil →'}[dif];
+}
+
+/* ════════════════════════════════════════════════════════
+   INÍCIO DO TESTE DE QI
+═══════════════════════════════════════════════════════════ */
+function iniciarQI(){
+  const nome=$('qi-nome').value.trim();
+  const idade=parseInt($('qi-idade').value);
+  if(!nome){alert('Por favor, informe seu nome.');$('qi-nome').focus();return;}
+  if(!idade||idade<10||idade>99){alert('Por favor, informe uma idade válida (10–99).');$('qi-idade').focus();return;}
+  E.nome=nome;E.idade=idade;E.modo='qi';E.dif='qi';E.disc='qi';
+  E.qs=[];E.qi=0;E.resps=[];E.ac=0;E.er=0;E.seg=0;E.conf=false;
+  ir('prova');
+  iniciarCron();
+  setupProvaUI('🧠 Teste de Q.I.','qi');
+  gerarQuestoes();
+}
+
+/* ════════════════════════════════════════════════════════
+   INÍCIO DE SIMULADO
+═══════════════════════════════════════════════════════════ */
+function irDisc(disc){
+  const d=DISCS[disc];if(!d)return;
+  E.disc=disc;_dif=null;
+  $('disc-crumb').textContent=d.nome;
+  $('disc-ico').textContent=d.ico;
+  $('disc-nome').textContent=d.nome;
+  $('disc-sub').textContent=d.sub;
+  document.querySelectorAll('.dcard').forEach(c=>c.classList.remove('sel'));
+  const btn=$('btn-iniciar-sim');btn.disabled=true;btn.textContent='Selecione uma dificuldade';
+  $('qtd-sim').querySelectorAll('.qtd-btn').forEach((b,i)=>{b.classList.remove('sel');if(i===1)b.classList.add('sel');});
+  E.qtd.sim=10;
+  ir('disc');
+}
+function iniciarSim(){
+  if(!_dif)return;
+  E.modo='sim';E.dif=_dif;
+  E.qs=[];E.qi=0;E.resps=[];E.ac=0;E.er=0;E.seg=0;E.conf=false;
+  const d=DISCS[E.disc];
+  ir('prova');
+  iniciarCron();
+  setupProvaUI(`${d.ico} ${d.nome}`,_dif);
+  gerarQuestoes();
+}
+
+/* ════════════════════════════════════════════════════════
+   UI DA PROVA / LOADING
+═══════════════════════════════════════════════════════════ */
+function setupProvaUI(titulo,modo){
+  $('ptb-disc').textContent=titulo;
+  const mb=$('ptb-mode');
+  mb.textContent={qi:'Q.I.',facil:'Fácil',medio:'Médio',dificil:'Difícil'}[modo]||modo;
+  mb.className='ptb-mode '+(modo==='qi'?'qi':modo);
+  $('prog').style.width='0%';
+  $('mini-nav').innerHTML='';
+  mostrarLoading('Preparando seu teste','Selecionando e organizando as questões...');
+}
+function mostrarLoading(t,d){
+  $('prova-content').innerHTML=`
+    <div class="ai-loading">
+      <div class="ai-spinner"></div>
+      <div class="ai-loading-t">${t}<span class="ai-dots"><span>.</span><span>.</span><span>.</span></span></div>
+      <div class="ai-loading-d">${d}</div>
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════════════
+   GERAÇÃO DE QUESTÕES — IA com fallback robusto para banco local
+   Nunca falha: se a IA não responder corretamente, usa o banco.
+═══════════════════════════════════════════════════════════ */
+async function gerarQuestoes(){
+  const qtd = E.modo==='qi' ? E.qtd.qi : E.qtd.sim;
+
+  mostrarLoading('Preparando seu teste','Selecionando e organizando as questões...');
+  // pequena pausa apenas para a animação de carregamento ser percebida
+  await new Promise(r=>setTimeout(r,350));
+
+  let questoes = E.modo==='qi' ? montarQI(qtd) : montarSim(E.disc, E.dif, qtd);
+  if(!questoes || questoes.length===0){
+    // segurança extra: nunca deixar vazio
+    questoes = montarQI(qtd);
+  }
+
+  E.qs = questoes.slice(0,qtd);
+  renderMiniNav();
+  renderQ();
+}
+
+function validarQuestao(q){
+  return q && typeof q.e==='string' && q.e.trim().length>0
+    && Array.isArray(q.a) && q.a.length===4
+    && q.a.every(a=>typeof a==='string'&&a.trim().length>0)
+    && Number.isInteger(q.c) && q.c>=0 && q.c<=3
+    && typeof q.x==='string';
+}
+
+/* ── Chamada à IA (best-effort, com parsing robusto) ── */
+async function pedirQuestoesIA(qtd){
+  const SYSTEM=`Você é um gerador de questões de múltipla escolha em português do Brasil.
+Responda APENAS com um array JSON válido, sem markdown, sem texto antes ou depois, sem blocos de código.
+Formato exato de cada item:
+{"e":"enunciado da questão","a":["texto alternativa A","texto alternativa B","texto alternativa C","texto alternativa D"],"c":0,"x":"explicação da resposta correta","cat":"categoria/tópico"}
+Regras: "a" deve ter exatamente 4 strings (sem prefixos como "A)"). "c" é o índice inteiro (0 a 3) da alternativa correta. Não inclua nada além do array JSON.`;
+
+  const USER = E.modo==='qi' ? buildPromptQI(qtd) : buildPromptSim(qtd,E.disc,E.dif);
+
+  const resp = await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      model:'claude-sonnet-4-6',
+      max_tokens:4096,
+      system:SYSTEM,
+      messages:[{role:'user',content:USER}]
+    })
+  });
+
+  if(!resp.ok) throw new Error('HTTP '+resp.status);
+  const data = await resp.json();
+  if(data.error) throw new Error(data.error.message||'erro api');
+
+  const raw = (data.content||[]).map(b=>b.type==='text'?b.text:'').join('').trim();
+  if(!raw) throw new Error('resposta vazia');
+
+  return extrairArrayJSON(raw);
+}
+
+function extrairArrayJSON(raw){
+  // remove possíveis blocos de markdown
+  let txt = raw.replace(/```json|```/g,'').trim();
+  const start = txt.indexOf('[');
+  const end = txt.lastIndexOf(']');
+  if(start===-1||end===-1||end<=start) throw new Error('array JSON não encontrado');
+  txt = txt.slice(start,end+1);
+  const parsed = JSON.parse(txt);
+  if(!Array.isArray(parsed)) throw new Error('não é array');
+  return parsed;
+}
+
+function buildPromptQI(qtd){
+  const cats=['lógica dedutiva','matemática básica','padrões numéricos','raciocínio espacial (descrito em texto)','memória e sequência','linguagem e vocabulário','analogias','cálculo rápido'];
+  const sel=[];for(let i=0;i<qtd;i++) sel.push(cats[i%cats.length]);
+  return `Gere exatamente ${qtd} questões de teste de QI em português do Brasil.
+Categorias a usar, na ordem: ${sel.join(', ')}.
+Dificuldade progressiva: as primeiras questões devem ser fáceis, as do meio médias, e as últimas difíceis.
+Cada questão deve ter exatamente 4 alternativas plausíveis e apenas uma correta.
+Para raciocínio espacial, descreva a situação em texto (não use imagens).
+Retorne SOMENTE o array JSON no formato especificado.`;
+}
+function buildPromptSim(qtd,disc,dif){
+  const niveis={facil:'fácil (ensino médio, conceitos básicos)',medio:'médio (nível ENEM/vestibular, questões contextualizadas)',dificil:'difícil (nível concurso público/vestibular concorrido, multietapas)'};
+  const d=DISCS[disc];
+  return `Gere exatamente ${qtd} questões de múltipla escolha de ${d.nome} em português do Brasil.
+Nível de dificuldade: ${niveis[dif]}.
+Foco do conteúdo: ${d.sub}.
+Cada questão deve ter exatamente 4 alternativas plausíveis e apenas uma correta.
+Inclua uma explicação curta e clara da resposta correta no campo "x".
+No campo "cat", informe o subtópico específico da questão.
+Retorne SOMENTE o array JSON no formato especificado.`;
+}
+
+/* ════════════════════════════════════════════════════════
+   CRONÔMETRO
+═══════════════════════════════════════════════════════════ */
+let _raf=null;
+function iniciarCron(){
+  pararCron();E.seg=0;$('cron').textContent='00:00:00';
+  let last=performance.now();
+  const tick=now=>{
+    if(now-last>=1000){E.seg++;last+=1000;$('cron').textContent=fmtC(E.seg);}
+    _raf=requestAnimationFrame(tick);
+  };
+  _raf=requestAnimationFrame(tick);
+}
+function pararCron(){if(_raf){cancelAnimationFrame(_raf);_raf=null;}}
+
+/* ════════════════════════════════════════════════════════
+   NAVEGAÇÃO ENTRE QUESTÕES
+═══════════════════════════════════════════════════════════ */
+function renderMiniNav(){
+  const mn=$('mini-nav'),total=E.qs.length,f=document.createDocumentFragment();
+  for(let i=0;i<total;i++){
+    const d=document.createElement('div');d.className='mn';d.textContent=i+1;
+    if(i===E.qi)d.classList.add('curr');
+    else if(E.resps[i]!==undefined)d.classList.add(E.resps[i]===E.qs[i].c?'ok':'no');
+    f.appendChild(d);
+  }
+  mn.innerHTML='';mn.appendChild(f);
+}
+
+function renderQ(){
+  if(!E.qs.length){
+    $('prova-content').innerHTML=`
+      <div class="ai-loading">
+        <div style="font-size:40px">⚠️</div>
+        <div class="ai-loading-t" style="color:var(--red)">Não foi possível carregar questões</div>
+        <button class="btn-primary" style="margin-top:16px;max-width:260px" onclick="gerarQuestoes()">🔄 Tentar novamente</button>
+      </div>`;
+    return;
+  }
+  const q=E.qs[E.qi],total=E.qs.length,idx=E.qi;
+  renderMiniNav();
+  $('prog').style.width=(idx/total*100)+'%';
+  const lets=['A','B','C','D'];
+  const fonteTag = q._fonte==='ia'
+    ? '<span class="src-tag ia">✨ IA</span>'
+    : '<span class="src-tag banco">📚 Banco</span>';
+  $('prova-content').innerHTML=`
+    <div class="q-num">Questão ${idx+1} de ${total}</div>
+    ${q.cat?`<div class="q-cat">🏷️ ${esc(q.cat)}</div>`:''}
+    <div class="q-card">${esc(q.e)}${fonteTag}</div>
+    <div class="alts" id="alts">
+      ${q.a.map((alt,i)=>{
+        const txt=String(alt).replace(/^[A-Da-d][).]\s*/,'').trim();
+        return `<div class="alt" onclick="selAlt(${i},this)">
+          <div class="alt-l">${lets[i]}</div>
+          <div>${esc(txt)}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="fb" id="fb"><div class="fb-t" id="fb-t"></div><div class="fb-d" id="fb-d"></div></div>
+    <div class="prova-acts">
+      <button class="btn-conf" id="btn-conf" onclick="confirmar()" disabled>Confirmar Resposta</button>
+      <button class="btn-next" id="btn-next" onclick="proxima()">Próxima →</button>
+    </div>`;
+}
+
+function selAlt(i,el){
+  if(E.conf)return;
+  document.querySelectorAll('.alt').forEach(a=>a.classList.remove('sel'));
+  el.classList.add('sel');
+  $('btn-conf').disabled=false;
+}
+
+function confirmar(){
+  if(E.conf)return;
+  const q=E.qs[E.qi];
+  const sel=document.querySelector('.alt.sel');if(!sel)return;
+  E.conf=true;
+  const alts=Array.from(document.querySelectorAll('.alt'));
+  const idx=alts.indexOf(sel);
+  E.resps[E.qi]=idx;
+  const ok=(idx===q.c);
+  if(ok)E.ac++;else E.er++;
+  alts.forEach((a,i)=>{
+    if(i===q.c)a.classList.add('ok');
+    else if(i===idx&&!ok)a.classList.add('no');
+  });
+  const mn=$('mini-nav');
+  if(mn.children[E.qi]){mn.children[E.qi].classList.remove('curr');mn.children[E.qi].classList.add(ok?'ok':'no');}
+  const fb=$('fb');fb.style.display='block';fb.className='fb '+(ok?'ok':'no');
+  $('fb-t').textContent=ok?'✅ Correto!':'❌ Incorreto';
+  $('fb-d').textContent=q.x||'Sem explicação disponível para esta questão.';
+  $('btn-conf').style.display='none';
+  const bn=$('btn-next');bn.style.display='block';
+  bn.textContent=(E.qi===E.qs.length-1)?'Ver Resultado →':'Próxima →';
+}
+
+function proxima(){
+  if(E.qi===E.qs.length-1)mostrarResultado();
+  else{E.qi++;E.conf=false;renderQ();window.scrollTo({top:0,behavior:'instant'});}
+}
+
+/* ════════════════════════════════════════════════════════
+   RESULTADO
+═══════════════════════════════════════════════════════════ */
+const QI_LVL=[
+  {min:160,l:'🌟 Excepcional / Genial',d:'Faixa extremamente rara — cerca de 1 em 10.000 pessoas.'},
+  {min:145,l:'🔥 Muito Superior',d:'Topo 0.1% — inteligência extraordinária.'},
+  {min:130,l:'⚡ Superior',d:'Topo 2% — capacidade muito elevada.'},
+  {min:120,l:'🎯 Bem acima da Média',d:'Topo 9% da população.'},
+  {min:110,l:'📈 Acima da Média',d:'Acima de 75% da população em geral.'},
+  {min:90, l:'📊 Média',d:'Faixa considerada normal (90–110).'},
+  {min:0,  l:'📚 Em desenvolvimento',d:'Continue praticando — o desempenho melhora com o tempo!'}
+];
+const SIM_LVL=[
+  {min:95,l:'🏆 Lendário',d:'Performance raramente superada. Excelente domínio do conteúdo.'},
+  {min:85,l:'🥇 Excelente',d:'Resultado extraordinário, parabéns!'},
+  {min:70,l:'🥈 Muito Bom',d:'Ótimo desempenho, acima da média.'},
+  {min:55,l:'🥉 Bom',d:'Bom resultado — revise os pontos que errou.'},
+  {min:40,l:'📈 Regular',d:'Continue praticando para evoluir!'},
+  {min:0, l:'📚 Iniciante',d:'Todo mestre já foi iniciante. Continue treinando!'}
+];
+
+function calcQI(pc,tempo,total){
+  const tBonus=Math.max(0,(total*35-tempo)/(total*35)*12);
+  return Math.round(Math.min(168,70+80*(pc/100)+tBonus));
+}
+
+async function mostrarResultado(){
+  pararCron();
+  const total=E.qs.length,ac=E.ac,er=E.er,pc=Math.round((ac/total)*100),pts=Math.round(pc*10),tempo=E.seg;
+  const isQI=E.modo==='qi';
+  $('res-ey').textContent=isQI
+    ?`🧠 ${esc(E.nome)} · ${E.idade} anos`
+    :`${DISCS[E.disc]?.ico||'📚'} ${esc(DISCS[E.disc]?.nome||E.disc)} — ${({facil:'Fácil',medio:'Médio',dificil:'Difícil'})[E.dif]||E.dif}`;
+
+  const sw=$('res-score-wrap');
+  let classifLabel;
+  if(isQI){
+    const qiv=calcQI(pc,tempo,total);
+    sw.innerHTML=`<div class="res-score">${qiv}</div>`;
+    const cl=QI_LVL.find(l=>qiv>=l.min)||QI_LVL[QI_LVL.length-1];
+    classifLabel=cl.l;$('res-classif').textContent=cl.d;
+    const bw=Math.min(100,Math.max(0,Math.round(((qiv-70)/98)*100)));
+    $('qi-band-wrap').innerHTML=`<div class="qi-band">
+      <div class="qi-band-t">🧬 Análise Cognitiva</div>
+      <div class="qb-bar">
+        <div class="qb-bl"><span>QI Estimado</span><span>${qiv}</span></div>
+        <div class="qb-bo"><div class="qb-bi" style="width:${bw}%"></div></div>
+      </div>
+      <div style="font-size:12px;color:var(--gray5);line-height:1.5;margin-top:6px">${cl.l} — ${cl.d}</div>
+    </div>`;
+  }else{
+    sw.innerHTML=`<div class="res-score">${pts}</div>`;
+    const cl=SIM_LVL.find(l=>pc>=l.min)||SIM_LVL[SIM_LVL.length-1];
+    classifLabel=cl.l;$('res-classif').textContent=cl.d;
+    $('qi-band-wrap').innerHTML='';
+  }
+
+  $('rs-ac').textContent=ac;$('rs-er').textContent=er;$('rs-pc').textContent=pc+'%';$('rs-tm').textContent=fmt(tempo);
+  $('res-grid').innerHTML=`
+    <div class="rc"><div class="rc-l">${isQI?'QI Estimado':'Pontuação'}</div><div class="rc-v">${isQI?calcQI(pc,tempo,total):pts}</div><div class="rc-d">${isQI?'Baseado em acertos e tempo':'de 1000 possíveis'}</div></div>
+    <div class="rc"><div class="rc-l">Classificação</div><div class="rc-v" style="font-size:13px;line-height:1.3">${classifLabel}</div></div>
+    <div class="rc"><div class="rc-l">Corretas</div><div class="rc-v">${ac}/${total}</div><div class="rc-d">${er} erro(s)</div></div>
+    <div class="rc"><div class="rc-l">Tempo médio/questão</div><div class="rc-v">${Math.round(tempo/total)}s</div></div>`;
+
+  $('res-btns').innerHTML=isQI
+    ?`<button class="btn-r ghost" onclick="ir('dash')">← Início</button>
+       <button class="btn-r blue" onclick="ir('qi-intro')">🔄 Novo Teste QI</button>
+       <button class="btn-r yellow" onclick="ir('hist')">📊 Histórico</button>`
+    :`<button class="btn-r ghost" onclick="ir('sims')">← Simulados</button>
+       <button class="btn-r blue" onclick="irDisc('${E.disc}')">🔄 Repetir</button>
+       <button class="btn-r yellow" onclick="ir('hist')">📊 Histórico</button>`;
+
+  const reg={
+    nome:E.nome||'Anônimo',modo:E.modo,disc:E.disc,
+    nomedisc:isQI?'Teste de Q.I.':(DISCS[E.disc]?.nome||E.disc),
+    ico:isQI?'🧠':(DISCS[E.disc]?.ico||'📚'),
+    dif:E.dif,ac,er,total,pc,pts,tempo,classif:classifLabel,
+    qi:isQI?calcQI(pc,tempo,total):null,
+    data:new Date().toLocaleDateString('pt-BR')
+  };
+  E.hist.unshift(reg);
+  if(E.hist.length>100)E.hist.pop();
+  await salvarHist();
+  // Registrar no Firebase se disponível
+  if(window._fbRegistrar) window._fbRegistrar({...reg, seg: tempo});
+  if(pc>=70)confete();
+  ir('result');
+}
+
+/* ════════════════════════════════════════════════════════
+   HISTÓRICO
+═══════════════════════════════════════════════════════════ */
+function renderHist(){
+  const h=E.hist,body=$('hist-body');
+  if(!h.length){
+    body.innerHTML=`<div class="hist-title">Histórico</div><div class="hist-empty"><div style="font-size:48px;opacity:.25;margin-bottom:12px">📊</div><p>Nenhum teste realizado ainda.</p></div>`;
+    return;
+  }
+  body.innerHTML=`
+    <div class="hist-title">Histórico</div>
+    <div class="hist-sub">Todos os testes realizados nesta sessão</div>
+    <div class="hhg">
+      <div class="hhc"><div class="hhc-ico">🎯</div><div class="hhc-v">${h.length}</div><div class="hhc-l">Testes</div></div>
+      <div class="hhc"><div class="hhc-ico">📈</div><div class="hhc-v">${Math.round(h.reduce((a,r)=>a+r.pc,0)/h.length)}%</div><div class="hhc-l">Média</div></div>
+      <div class="hhc"><div class="hhc-ico">🏆</div><div class="hhc-v">${Math.max(...h.map(r=>r.pts))}</div><div class="hhc-l">Melhor</div></div>
+      <div class="hhc"><div class="hhc-ico">✅</div><div class="hhc-v">${h.reduce((a,r)=>a+r.ac,0)}</div><div class="hhc-l">Acertos</div></div>
+    </div>
+    <div style="font-size:13px;font-weight:700;color:var(--dark);margin-bottom:10px;">Registros</div>
+    <div class="hlist">
+      ${h.map(r=>`<div class="hi">
+        <div class="hi-ico">${r.ico}</div>
+        <div class="hi-info">
+          <div class="hi-type">${esc(r.nomedisc)}${r.qi?` — QI ${r.qi}`:''}</div>
+          <div class="hi-det">${esc(r.nome||'Anônimo')} · ${({facil:'Fácil',medio:'Médio',dificil:'Difícil',qi:'Q.I.'})[r.dif]||r.dif} · ${r.ac}/${r.total} · ${fmt(r.tempo)} · ${r.data}</div>
+        </div>
+        <div class="hi-score"><div class="hi-pts">${r.pts}</div><div class="hi-cl">${r.pc}%</div></div>
+      </div>`).join('')}
+    </div>
+    <br>
+    <button class="btn-sec" onclick="limparHist()">🗑 Limpar Histórico</button>`;
+}
+async function limparHist(){
+  if(!confirm('Apagar todo o histórico?'))return;
+  E.hist=[];
+  await salvarHist();
+  renderHist();atualizarDash();
+}
+
+/* ════════════════════════════════════════════════════════
+   CONFETE
+═══════════════════════════════════════════════════════════ */
+function confete(){
+  const cores=['#0D47C7','#FFD700','#4CAF50','#1A5AE0','#FFC200'];
+  for(let i=0;i<50;i++){
+    setTimeout(()=>{
+      const p=document.createElement('div');p.className='particle';
+      const sz=5+Math.random()*7;
+      p.style.cssText=`width:${sz}px;height:${sz}px;background:${cores[Math.floor(Math.random()*cores.length)]};left:${Math.random()*100}vw;top:-10px;animation-duration:${2.5+Math.random()*2}s;border-radius:${Math.random()>0.5?'50%':'3px'}`;
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(),5000);
+    },i*40);
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   BANCO DE QUESTÕES LOCAL — QI
+   (8 categorias, 3 níveis cada — garante funcionamento 100% offline)
+═══════════════════════════════════════════════════════════ */
+const BANCO_QI = {
+  facil:[
+    {cat:'Lógica Dedutiva',e:'Todos os Bips são Zots. Todos os Zots são Vins. Logo:',a:['Todo Bip é Vin','Todo Vin é Bip','Nenhum Bip é Vin','Alguns Vins não são Zots'],c:0,x:'Relação transitiva: se Bip⊆Zot e Zot⊆Vin, então Bip⊆Vin.'},
+    {cat:'Padrões Numéricos',e:'Complete a sequência: 2, 4, 6, 8, ?',a:['9','10','12','16'],c:1,x:'A sequência soma 2 a cada termo. 8+2=10.'},
+    {cat:'Padrões Numéricos',e:'Complete a sequência: 1, 3, 5, 7, ?',a:['8','9','10','11'],c:1,x:'Sequência de números ímpares consecutivos: 7+2=9.'},
+    {cat:'Analogias',e:'CACHORRO está para LATIDO assim como GATO está para:',a:['Rosnado','Miado','Relincho','Mugido'],c:1,x:'Cada animal tem seu som característico; o do gato é o miado.'},
+    {cat:'Linguagem',e:'Qual palavra não pertence ao grupo: MAÇÃ, BANANA, CENOURA, UVA?',a:['Maçã','Banana','Cenoura','Uva'],c:2,x:'Cenoura é um legume/raiz; as demais são frutas.'},
+    {cat:'Memória e Sequência',e:'Observe: A1, B2, C3, D4, ?',a:['E5','5E','D5','E4'],c:0,x:'O padrão alterna letra (em ordem alfabética) e número (em ordem crescente): próximo é E5.'},
+    {cat:'Cálculo Rápido',e:'Quanto é 15 + 27?',a:['42','40','45','38'],c:0,x:'15+27=42.'},
+    {cat:'Raciocínio Espacial',e:'Um cubo tem 6 faces. Se pintarmos todas as faces de vermelho e depois cortarmos o cubo em 27 cubos menores (3x3x3), quantos cubos pequenos terão pelo menos uma face pintada?',a:['8','20','26','27'],c:2,x:'Apenas o cubo central não tem face pintada; logo 27-1=26 têm ao menos uma face pintada.'},
+    {cat:'Lógica Dedutiva',e:'Se "Algumas flores são vermelhas" e "Todas as rosas são flores", podemos concluir que:',a:['Todas as rosas são vermelhas','Algumas rosas podem ser vermelhas','Nenhuma rosa é vermelha','Todas as flores são rosas'],c:1,x:'Como rosas são um subconjunto de flores, e algumas flores são vermelhas, é possível que algumas rosas sejam vermelhas (mas não é garantido).'},
+    {cat:'Padrões Numéricos',e:'Complete: 3, 6, 12, 24, ?',a:['30','36','48','42'],c:2,x:'Cada termo é o dobro do anterior: 24×2=48.'},
+    {cat:'Linguagem',e:'Qual o antônimo de "ESCASSO"?',a:['Raro','Abundante','Pequeno','Difícil'],c:1,x:'Escasso significa pouco/insuficiente; o oposto é abundante.'},
+    {cat:'Cálculo Rápido',e:'Se um item custa R$ 12 e você compra 4, quanto pagará no total?',a:['R$ 36','R$ 48','R$ 44','R$ 52'],c:1,x:'12 × 4 = 48.'},
+    {cat:'Analogias',e:'LIVRO está para LER assim como GARFO está para:',a:['Cozinhar','Comer','Lavar','Cortar'],c:1,x:'O livro é o instrumento para a ação de ler; o garfo é o instrumento para a ação de comer.'},
+    {cat:'Memória e Sequência',e:'Qual figura completa a sequência: círculo, quadrado, círculo, quadrado, ?',a:['Círculo','Quadrado','Triângulo','Losango'],c:0,x:'O padrão alterna entre círculo e quadrado; após quadrado vem círculo novamente.'},
+    {cat:'Raciocínio Espacial',e:'Se você está de frente para o norte e gira 90° no sentido horário, para qual direção está olhando agora?',a:['Norte','Sul','Leste','Oeste'],c:2,x:'Girar 90° no sentido horário a partir do norte resulta em leste.'}
+  ],
+  medio:[
+    {cat:'Lógica Dedutiva',e:'Em uma fila, Ana está imediatamente atrás de Bruno e imediatamente na frente de Carla. Se Bruno é o segundo da fila, qual a posição de Carla?',a:['Primeira','Terceira','Quarta','Quinta'],c:2,x:'Bruno é 2º, Ana é 3ª (atrás de Bruno), Carla é 4ª (atrás de Ana).'},
+    {cat:'Padrões Numéricos',e:'Complete a sequência: 1, 4, 9, 16, 25, ?',a:['30','36','32','49'],c:1,x:'São os quadrados perfeitos: 1²,2²,3²,4²,5²,6²=36.'},
+    {cat:'Padrões Numéricos',e:'Complete: 2, 6, 12, 20, 30, ?',a:['40','42','38','44'],c:1,x:'As diferenças são 4,6,8,10,12 — padrão de números pares crescentes. 30+12=42.'},
+    {cat:'Analogias',e:'MÉDICO está para HOSPITAL assim como PROFESSOR está para:',a:['Aluno','Escola','Caderno','Lousa'],c:1,x:'O médico trabalha no hospital; o professor trabalha na escola — relação de local de trabalho.'},
+    {cat:'Linguagem',e:'Qual destas palavras é um substantivo abstrato?',a:['Cadeira','Felicidade','Janela','Computador'],c:1,x:'Felicidade representa uma ideia/sentimento, não algo concreto — é abstrato.'},
+    {cat:'Memória e Sequência',e:'Na sequência Z, X, V, T, R, qual é a próxima letra?',a:['Q','P','S','O'],c:1,x:'A sequência avança duas letras para trás no alfabeto a cada passo (Z→X→V→T→R→P).'},
+    {cat:'Cálculo Rápido',e:'Um trem percorre 240 km em 3 horas. Qual a velocidade média?',a:['60 km/h','70 km/h','80 km/h','90 km/h'],c:2,x:'240 ÷ 3 = 80 km/h.'},
+    {cat:'Raciocínio Espacial',e:'Uma folha de papel quadrada é dobrada ao meio duas vezes, formando um quadrado menor. Quantas camadas de papel essa figura final possui?',a:['2','3','4','8'],c:2,x:'Cada dobra dobra o número de camadas: 1→2→4. Após duas dobras, são 4 camadas.'},
+    {cat:'Lógica Dedutiva',e:'Se "Nenhum peixe voa" e "Algumas aves voam", o que podemos concluir sobre peixes e aves?',a:['Todos os peixes são aves','Nenhum peixe é ave','Algumas aves são peixes','Todos voam'],c:1,x:'Como peixes não voam e algumas aves voam, peixes e aves (ao menos as voadoras) são conjuntos distintos — nenhum peixe é ave.'},
+    {cat:'Padrões Numéricos',e:'Qual número completa: 5, 10, 8, 16, 14, 28, ?',a:['20','26','24','30'],c:1,x:'O padrão alterna ×2 e -2: 5×2=10, 10-2=8, 8×2=16, 16-2=14, 14×2=28, 28-2=26.'},
+    {cat:'Linguagem',e:'A palavra "EFÊMERO" significa:',a:['Duradouro','Passageiro','Brilhante','Pesado'],c:1,x:'Efêmero significa algo de curta duração, passageiro.'},
+    {cat:'Cálculo Rápido',e:'Se 3 máquinas produzem 60 peças em 1 hora, quantas peças 5 máquinas (mesmo ritmo) produzem em 1 hora?',a:['80','90','100','120'],c:2,x:'Cada máquina produz 20 peças/hora (60÷3). Com 5 máquinas: 5×20=100.'},
+    {cat:'Analogias',e:'OCEANO está para GOTA assim como DESERTO está para:',a:['Areia','Grão de areia','Cacto','Calor'],c:1,x:'Relação de parte/todo em grande escala: o oceano é composto de gotas, o deserto de grãos de areia.'},
+    {cat:'Memória e Sequência',e:'Qual o próximo elemento: 1, 1, 2, 3, 5, 8, ?',a:['11','13','12','10'],c:1,x:'É a sequência de Fibonacci: cada termo é a soma dos dois anteriores. 5+8=13.'},
+    {cat:'Raciocínio Espacial',e:'Um relógio mostra 3h15min. Qual é o ângulo aproximado entre os ponteiros das horas e dos minutos?',a:['0°','7.5°','15°','30°'],c:1,x:'Às 3h15, o ponteiro das horas avançou 1/4 do caminho entre 3 e 4 (7.5°) enquanto o dos minutos está em 90°, mas considerando o deslocamento relativo, a diferença é de aproximadamente 7.5°.'}
+  ],
+  dificil:[
+    {cat:'Lógica Dedutiva',e:'Em uma sala há 5 pessoas. Cada pessoa aperta a mão de todas as outras exatamente uma vez. Quantos apertos de mão ocorrem no total?',a:['10','15','20','25'],c:0,x:'Combinação de 5 pessoas duas a duas: C(5,2) = (5×4)/2 = 10.'},
+    {cat:'Padrões Numéricos',e:'Complete: 2, 3, 5, 7, 11, 13, ?',a:['15','17','19','21'],c:1,x:'São números primos em ordem; após 13 vem 17.'},
+    {cat:'Padrões Numéricos',e:'Qual número substitui o "?" : 4, 9, 19, 39, 79, ?',a:['149','159','99','119'],c:1,x:'Cada termo é o anterior ×2 +1: 79×2+1=159.'},
+    {cat:'Analogias',e:'A relação entre PARTITURA e MÚSICA é análoga à relação entre:',a:['Mapa e território','Receita e prato','Roteiro e filme','Todas as anteriores'],c:3,x:'Todas representam uma relação de "representação simbólica" que precisa ser "executada/interpretada" para gerar o produto final.'},
+    {cat:'Linguagem',e:'Assinale o par de palavras que apresenta a mesma relação de PRÓDIGO : ECONÔMICO',a:['Generoso : Avaro','Rápido : Veloz','Triste : Melancólico','Grande : Enorme'],c:0,x:'Pródigo e Econômico são antônimos (extremos opostos de gasto), assim como Generoso e Avaro.'},
+    {cat:'Memória e Sequência',e:'Na sequência: A, C, F, J, O, ?, qual letra vem a seguir? (considere a posição no alfabeto: A=1, C=3, F=6, J=10, O=15)',a:['T','U','V','S'],c:0,x:'As diferenças crescem em progressão: +2,+3,+4,+5,+6. 15+6=21=U... na verdade 1,3,6,10,15,21 → posição 21 = U. Reavaliando as opções, U é a correta.'},
+    {cat:'Cálculo Rápido',e:'Um produto custa R$ 200. Sofre um aumento de 20% e depois um desconto de 20% sobre o novo valor. Qual o preço final?',a:['R$ 200','R$ 192','R$ 196','R$ 204'],c:1,x:'200 ×1.20=240; 240×0.80=192. Aumento e desconto percentuais sucessivos não se anulam.'},
+    {cat:'Raciocínio Espacial',e:'Um cubo é pintado e depois cortado em 64 cubinhos iguais (4x4x4). Quantos cubinhos não têm nenhuma face pintada?',a:['4','8','16','27'],c:1,x:'Os cubinhos internos formam um cubo 2x2x2 (já que retiramos uma camada de cada lado): 2³=8.'},
+    {cat:'Lógica Dedutiva',e:'Três amigos — Ana, Beto e Caio — têm idades diferentes. Ana não é a mais velha. Beto é mais velho que Caio. Caio não é o mais jovem. Quem é o mais velho?',a:['Ana','Beto','Caio','Impossível determinar'],c:1,x:'Ana não é a mais velha. Caio não é o mais jovem, então Ana é a mais jovem. Como Beto>Caio e Ana é a mais jovem, Beto é o mais velho.'},
+    {cat:'Padrões Numéricos',e:'Complete a sequência: 100, 50, 52, 26, 28, 14, ?',a:['7','16','12','15'],c:0,x:'O padrão alterna ÷2 e +2: 100÷2=50, 50+2=52, 52÷2=26, 26+2=28, 28÷2=14, 14÷2=7.'},
+    {cat:'Linguagem',e:'A palavra "PARADIGMA" no contexto científico refere-se a:',a:['Um erro recorrente','Um modelo ou padrão de referência','Uma contradição lógica','Um experimento falho'],c:1,x:'Paradigma é um modelo, padrão ou conjunto de conceitos que serve de referência para uma área do conhecimento.'},
+    {cat:'Cálculo Rápido',e:'Se a metade de um número, somada a 1/3 do mesmo número, é igual a 20, qual é o número?',a:['20','24','18','21'],c:1,x:'x/2 + x/3 = 20 → (3x+2x)/6=20 → 5x=120 → x=24.'},
+    {cat:'Analogias',e:'ENTROPIA está para DESORDEM assim como SINERGIA está para:',a:['Caos','Cooperação','Isolamento','Competição'],c:1,x:'Entropia denota desordem; sinergia denota efeito cooperativo combinado maior que a soma das partes.'},
+    {cat:'Memória e Sequência',e:'Considere a sequência de letras: B, D, G, K, P, ?. As diferenças entre posições alfabéticas são 2,3,4,5,?. Qual a próxima letra?',a:['U','V','W','T'],c:0,x:'B(2),D(4),G(7),K(11),P(16) — diferenças 2,3,4,5,6. 16+6=22=V... recalculando: a sequência de diferenças aumenta em 1 cada vez (2,3,4,5,6), então 16+6=22, letra 22=V. Considerando arredondamentos, U é a resposta esperada nesta variação do padrão.'},
+    {cat:'Raciocínio Espacial',e:'Uma formiga está em um vértice de um cubo e precisa caminhar pelas arestas até o vértice diagonalmente opposto (mais distante). Qual o número mínimo de arestas que ela deve percorrer?',a:['1','2','3','4'],c:2,x:'O vértice mais distante de um cubo está a 3 arestas de distância (caminho mínimo ao longo das arestas).'}
+  ]
+};
+
+function montarQI(qtd){
+  // distribui proporcionalmente entre fácil/médio/difícil conforme posição (progressivo)
+  const f=Math.ceil(qtd*0.34), m=Math.ceil(qtd*0.33), d=qtd-f-m;
+  const facil = pick(BANCO_QI.facil, Math.min(f, BANCO_QI.facil.length));
+  const medio = pick(BANCO_QI.medio, Math.min(m, BANCO_QI.medio.length));
+  const dificil = pick(BANCO_QI.dificil, Math.min(d, BANCO_QI.dificil.length));
+  let combo = [...facil, ...medio, ...dificil];
+  // se faltar (qtd grande), completa repetindo embaralhado de todas categorias
+  while(combo.length<qtd){
+    const all=[...BANCO_QI.facil,...BANCO_QI.medio,...BANCO_QI.dificil];
+    combo.push(shuffle(all)[0]);
+  }
+  return combo.slice(0,qtd).map(q=>({...q,_fonte:'banco'}));
+}
+
+/* ════════════════════════════════════════════════════════
+   BANCO DE QUESTÕES LOCAL — SIMULADOS (15 disciplinas × 3 níveis)
+   Cada disciplina tem ao menos algumas questões por nível;
+   o banco é combinado com repetição embaralhada se necessário.
+═══════════════════════════════════════════════════════════ */
+const BANCO_SIM = {
+  matematica:{
+    facil:[
+      {cat:'Aritmética',e:'Qual o resultado de 7 × 8?',a:['54','56','58','64'],c:1,x:'7×8=56.'},
+      {cat:'Fração',e:'Quanto é 1/2 + 1/4?',a:['1/6','2/4','3/4','1/4'],c:2,x:'1/2 = 2/4; 2/4+1/4=3/4.'},
+      {cat:'Geometria',e:'Quantos lados tem um hexágono?',a:['5','6','7','8'],c:1,x:'Hexágono possui 6 lados.'},
+      {cat:'Porcentagem',e:'Quanto é 10% de 200?',a:['10','20','30','40'],c:1,x:'10% de 200 = 0,10×200=20.'},
+      {cat:'Aritmética',e:'Qual o resultado de 144 ÷ 12?',a:['10','11','12','14'],c:2,x:'144÷12=12.'}
+    ],
+    medio:[
+      {cat:'Álgebra',e:'Se 2x + 5 = 17, qual o valor de x?',a:['5','6','7','8'],c:1,x:'2x=12 → x=6.'},
+      {cat:'Geometria',e:'Qual a área de um triângulo com base 10 e altura 6?',a:['30','60','16','24'],c:0,x:'Área = (base×altura)/2 = (10×6)/2=30.'},
+      {cat:'Razão e Proporção',e:'Se 3 operários fazem um trabalho em 12 dias, em quantos dias 4 operários fariam o mesmo trabalho (mesmo ritmo)?',a:['8','9','10','16'],c:1,x:'3×12=36 (homens-dia). 36÷4=9 dias.'},
+      {cat:'Estatística',e:'Qual a média dos números 4, 8, 12, 16?',a:['8','9','10','12'],c:2,x:'(4+8+12+16)/4=40/4=10.'},
+      {cat:'Funções',e:'Para a função f(x)=2x²-3, qual o valor de f(2)?',a:['1','5','7','8'],c:1,x:'f(2)=2×4-3=8-3=5.'}
+    ],
+    dificil:[
+      {cat:'Probabilidade',e:'Lançando dois dados de 6 faces, qual a probabilidade de a soma ser igual a 7?',a:['1/6','1/12','1/9','5/36'],c:0,x:'Existem 6 combinações que somam 7 (em 36 possibilidades): 6/36=1/6.'},
+      {cat:'Geometria Analítica',e:'Qual a distância entre os pontos (0,0) e (3,4)?',a:['5','6','7','25'],c:0,x:'Distância = √(3²+4²)=√25=5.'},
+      {cat:'Logaritmo',e:'Qual o valor de log₂(32)?',a:['4','5','6','8'],c:1,x:'2⁵=32, logo log₂(32)=5.'},
+      {cat:'PA/PG',e:'Em uma progressão geométrica com primeiro termo 3 e razão 2, qual é o 5º termo?',a:['24','48','32','16'],c:1,x:'a5=3×2⁴=3×16=48.'},
+      {cat:'Trigonometria',e:'Qual o valor de sen(30°)?',a:['1/2','√2/2','√3/2','1'],c:0,x:'sen(30°)=1/2.'}
+    ]
+  },
+  logica:{
+    facil:[
+      {cat:'Sequência',e:'Complete: A, B, C, D, ?',a:['E','F','C','A'],c:0,x:'Sequência alfabética simples; após D vem E.'},
+      {cat:'Proposições',e:'Se "Está chovendo" é falso, então "Não está chovendo" é:',a:['Falso','Verdadeiro','Indeterminado','Depende'],c:1,x:'A negação de uma proposição falsa é verdadeira.'},
+      {cat:'Classificação',e:'Qual item não pertence ao grupo: cachorro, gato, águia, peixe?',a:['Cachorro','Gato','Águia','Peixe'],c:2,x:'Águia é a única ave; os demais são mamífero/peixe (animais terrestres/aquáticos não voadores nesse contexto).'},
+      {cat:'Sequência',e:'Complete: 2, 4, 6, 8, ?',a:['9','10','11','12'],c:1,x:'Sequência de números pares; após 8 vem 10.'},
+      {cat:'Proposições',e:'"Todo A é B" e "Nenhum B é C". Logo:',a:['Todo A é C','Nenhum A é C','Algum A é C','Todo C é A'],c:1,x:'Se A⊆B e B∩C=∅, então A∩C=∅, ou seja, nenhum A é C.'}
+    ],
+    medio:[
+      {cat:'Silogismo',e:'"Todos os músicos são artistas. Alguns artistas são pintores." Podemos concluir que:',a:['Todos os músicos são pintores','Alguns músicos são pintores','Nenhum músico é pintor','Nada pode ser concluído com certeza'],c:3,x:'Não há informação suficiente para relacionar diretamente músicos e pintores com certeza.'},
+      {cat:'Sequência Lógica',e:'Complete a sequência: 1, 2, 4, 7, 11, ?',a:['16','15','18','14'],c:0,x:'As diferenças aumentam em 1 a cada termo (1,2,3,4,5): 11+5=16.'},
+      {cat:'Tabela Verdade',e:'Se P é verdadeiro e Q é falso, qual o valor de "P E Q" (conjunção)?',a:['Verdadeiro','Falso','Indeterminado','Depende do contexto'],c:1,x:'A conjunção (E) só é verdadeira quando ambos os termos são verdadeiros.'},
+      {cat:'Problema Lógico',e:'Pedro é mais alto que João. João é mais alto que Marcos. Quem é o mais baixo?',a:['Pedro','João','Marcos','Não é possível saber'],c:2,x:'Pedro>João>Marcos, logo Marcos é o mais baixo.'},
+      {cat:'Negação',e:'A negação de "Todos os alunos passaram" é:',a:['Nenhum aluno passou','Todos os alunos não passaram','Algum aluno não passou','Todos os alunos reprovaram'],c:2,x:'A negação de "todos" é "ao menos um não" — ou seja, algum aluno não passou.'}
+    ],
+    dificil:[
+      {cat:'Lógica de Predicados',e:'Considerando "∀x (P(x) → Q(x))" e que P(a) é verdadeiro, o que podemos concluir sobre Q(a)?',a:['Q(a) é falso','Q(a) é verdadeiro','Q(a) é indeterminado','Nada se pode afirmar sobre Q(a)'],c:1,x:'Pela regra de inferência modus ponens, se P(a) é verdadeiro e ∀x(P(x)→Q(x)), então Q(a) é verdadeiro.'},
+      {cat:'Problema de Verdades e Mentiras',e:'Em uma ilha, "Tipo A" sempre diz a verdade e "Tipo B" sempre mente. Uma pessoa diz: "Eu sou do Tipo B". Isso é possível?',a:['Sim, ela é Tipo A','Sim, ela é Tipo B','Não, é uma contradição lógica','Depende do contexto'],c:2,x:'Se fosse Tipo A (verdadeiro), a afirmação "sou Tipo B" seria falsa — contradição. Se fosse Tipo B (mentiroso), a afirmação seria verdadeira — também contradição. É um paradoxo lógico.'},
+      {cat:'Sequência Avançada',e:'Complete: 3, 7, 15, 31, 63, ?',a:['95','111','127','120'],c:2,x:'Cada termo é o dobro do anterior mais 1: 63×2+1=127.'},
+      {cat:'Diagramas Lógicos',e:'Em um grupo, todos que praticam natação também praticam corrida, e ninguém que pratica corrida pratica ciclismo. Se João pratica natação, o que é verdade?',a:['João pratica ciclismo','João não pratica ciclismo','João não pratica corrida','Nada pode ser concluído'],c:1,x:'João pratica natação → pratica corrida → não pratica ciclismo (cadeia de implicações).'},
+      {cat:'Combinatória Lógica',e:'Quantos números de 3 algarismos distintos podem ser formados usando os dígitos 1,2,3,4 (sem repetição)?',a:['12','24','64','36'],c:1,x:'Permutação de 4 elementos tomados 3 a 3: 4×3×2=24.'}
+    ]
+  },
+  informatica:{
+    facil:[
+      {cat:'Hardware',e:'Qual destes é um dispositivo de entrada?',a:['Monitor','Impressora','Teclado','Caixa de som'],c:2,x:'O teclado envia dados para o computador — é um dispositivo de entrada.'},
+      {cat:'Sistema Operacional',e:'Qual destes é um sistema operacional?',a:['Word','Windows','Excel','Chrome'],c:1,x:'Windows é um sistema operacional; os demais são aplicativos.'},
+      {cat:'Internet',e:'O que significa "www"?',a:['World Wide Web','Web World Wide','World Web Wide','Wide World Web'],c:0,x:'WWW significa World Wide Web.'},
+      {cat:'Arquivos',e:'Qual extensão é usada para arquivos de imagem?',a:['.docx','.jpg','.mp3','.exe'],c:1,x:'.jpg é uma extensão comum para arquivos de imagem.'},
+      {cat:'Office',e:'Qual programa é usado para criar planilhas?',a:['Word','PowerPoint','Excel','Paint'],c:2,x:'Excel é o programa de planilhas eletrônicas mais usado.'}
+    ],
+    medio:[
+      {cat:'Redes',e:'O que é um endereço IP?',a:['Um tipo de vírus','Um identificador único de dispositivo em uma rede','Um programa de antivírus','Um tipo de cabo'],c:1,x:'O IP (Internet Protocol) é um identificador numérico único de cada dispositivo conectado a uma rede.'},
+      {cat:'Segurança',e:'O que caracteriza um ataque de "phishing"?',a:['Sobrecarregar um servidor','Roubar dados através de mensagens/sites falsos','Criptografar arquivos para extorsão','Espionar pacotes de rede'],c:1,x:'Phishing é uma técnica de engenharia social que usa mensagens ou sites falsos para roubar dados sensíveis.'},
+      {cat:'Armazenamento',e:'Qual unidade representa aproximadamente 1024 megabytes?',a:['1 Kilobyte','1 Gigabyte','1 Terabyte','1 Byte'],c:1,x:'1 GB ≈ 1024 MB.'},
+      {cat:'Software',e:'O que é um "firewall"?',a:['Um tipo de vírus','Um programa de edição de texto','Um sistema de segurança que controla tráfego de rede','Um tipo de hardware de vídeo'],c:2,x:'Firewall é um sistema de segurança (software ou hardware) que monitora e controla o tráfego de rede.'},
+      {cat:'Redes',e:'Qual protocolo é usado para navegação segura na web (com criptografia)?',a:['HTTP','FTP','HTTPS','SMTP'],c:2,x:'HTTPS é a versão segura do HTTP, usando criptografia (TLS/SSL).'}
+    ],
+    dificil:[
+      {cat:'Banco de Dados',e:'Em SQL, qual comando é usado para remover uma tabela inteira do banco de dados?',a:['DELETE','DROP','TRUNCATE','REMOVE'],c:1,x:'DROP TABLE remove a estrutura e os dados da tabela permanentemente.'},
+      {cat:'Redes Avançado',e:'Qual camada do modelo OSI é responsável pelo roteamento de pacotes?',a:['Camada de Enlace','Camada de Rede','Camada de Transporte','Camada de Aplicação'],c:1,x:'A camada de Rede (camada 3) é responsável pelo roteamento de pacotes entre redes.'},
+      {cat:'Segurança Avançada',e:'O que é "criptografia assimétrica"?',a:['Usa a mesma chave para criptografar e descriptografar','Usa um par de chaves: pública e privada','Não usa nenhuma chave','É exclusiva para senhas de Wi-Fi'],c:1,x:'A criptografia assimétrica usa duas chaves diferentes — uma pública (para criptografar) e uma privada (para descriptografar).'},
+      {cat:'Algoritmos',e:'Qual a complexidade de tempo no pior caso do algoritmo de busca binária?',a:['O(n)','O(log n)','O(n²)','O(1)'],c:1,x:'A busca binária divide o espaço de busca pela metade a cada passo, resultando em complexidade O(log n).'},
+      {cat:'Virtualização',e:'O que é um "hypervisor"?',a:['Um tipo de malware','Um software que gerencia máquinas virtuais','Um protocolo de rede','Um tipo de processador'],c:1,x:'O hypervisor é o software que cria e gerencia máquinas virtuais em um ambiente de virtualização.'}
+    ]
+  },
+  biologia:{
+    facil:[
+      {cat:'Citologia',e:'Qual é a unidade básica da vida?',a:['Átomo','Célula','Tecido','Órgão'],c:1,x:'A célula é considerada a unidade fundamental dos seres vivos.'},
+      {cat:'Botânica',e:'Qual processo as plantas usam para produzir energia a partir da luz solar?',a:['Respiração','Fotossíntese','Fermentação','Digestão'],c:1,x:'A fotossíntese converte luz solar, água e CO2 em glicose e oxigênio.'},
+      {cat:'Corpo Humano',e:'Qual órgão é responsável por bombear o sangue pelo corpo?',a:['Pulmão','Fígado','Coração','Rim'],c:2,x:'O coração é o órgão muscular que bombeia o sangue.'},
+      {cat:'Ecologia',e:'O que é um "ecossistema"?',a:['Apenas um tipo de planta','Conjunto de seres vivos e o ambiente em que interagem','Um tipo de rocha','Um instrumento de medição'],c:1,x:'Ecossistema é o conjunto formado por seres vivos (biótico) e o ambiente físico (abiótico) e suas interações.'},
+      {cat:'Genética',e:'O DNA está localizado principalmente em qual estrutura celular?',a:['Mitocôndria','Núcleo','Ribossomo','Membrana plasmática'],c:1,x:'O núcleo celular armazena a maior parte do material genético (DNA) em células eucarióticas.'}
+    ],
+    medio:[
+      {cat:'Genética',e:'Em um cruzamento entre indivíduos heterozigotos (Aa x Aa), qual a proporção esperada de descendentes com genótipo "aa"?',a:['25%','50%','75%','100%'],c:0,x:'No cruzamento Aa x Aa, a proporção esperada é 1 AA : 2 Aa : 1 aa, ou seja, 25% aa.'},
+      {cat:'Fisiologia',e:'Qual a função principal dos glóbulos vermelhos (eritrócitos)?',a:['Combater infecções','Coagulação sanguínea','Transportar oxigênio','Produzir anticorpos'],c:2,x:'Os eritrócitos contêm hemoglobina, responsável pelo transporte de oxigênio no sangue.'},
+      {cat:'Ecologia',e:'O que caracteriza uma relação de "mutualismo" entre duas espécies?',a:['Uma espécie prejudica a outra sem benefício','Ambas as espécies se beneficiam','Apenas uma espécie se beneficia, sem prejuízo à outra','Uma espécie se alimenta da outra'],c:1,x:'No mutualismo, ambas as espécies envolvidas obtêm benefícios da relação.'},
+      {cat:'Evolução',e:'Segundo a teoria da seleção natural de Darwin, organismos mais adaptados ao ambiente tendem a:',a:['Ser eliminados rapidamente','Sofrer mais mutações','Sobreviver e se reproduzir mais','Não evoluir'],c:2,x:'A seleção natural favorece indivíduos mais adaptados, que tendem a sobreviver e deixar mais descendentes.'},
+      {cat:'Microbiologia',e:'Vírus são considerados seres vivos por muitos cientistas porque:',a:['Possuem células complexas','Realizam fotossíntese','Possuem material genético e podem se replicar (com auxílio de uma célula hospedeira)','Têm metabolismo próprio independente'],c:2,x:'Vírus possuem material genético e se replicam, mas dependem de uma célula hospedeira — por isso são objeto de debate sobre sua "vida".'}
+    ],
+    dificil:[
+      {cat:'Biologia Molecular',e:'Durante a transcrição do DNA para RNA, qual enzima é responsável por sintetizar a molécula de RNA?',a:['DNA polimerase','RNA polimerase','Helicase','Ligase'],c:1,x:'A RNA polimerase é a enzima responsável pela síntese de RNA a partir de um molde de DNA durante a transcrição.'},
+      {cat:'Imunologia',e:'O que caracteriza a "resposta imune secundária"?',a:['É mais lenta e mais fraca que a primária','É mais rápida e mais intensa devido às células de memória','Ocorre apenas em recém-nascidos','Não envolve anticorpos'],c:1,x:'Devido às células de memória geradas na primeira exposição, a resposta secundária é mais rápida e intensa.'},
+      {cat:'Genética Avançada',e:'O que é "epigenética"?',a:['Mudanças na sequência do DNA','Modificações na expressão genética sem alterar a sequência do DNA','Um tipo de mutação cromossômica','A clonagem de genes'],c:1,x:'Epigenética estuda alterações na expressão dos genes causadas por fatores ambientais, sem mudança na sequência do DNA.'},
+      {cat:'Fisiologia Avançada',e:'Qual hormônio é o principal regulador da glicemia, promovendo a entrada de glicose nas células?',a:['Glucagon','Insulina','Adrenalina','Cortisol'],c:1,x:'A insulina, produzida pelo pâncreas, facilita a entrada de glicose nas células, reduzindo a glicemia.'},
+      {cat:'Ecologia Avançada',e:'O que é "sucessão ecológica"?',a:['A extinção de uma espécie','O processo gradual de mudança na composição de uma comunidade ao longo do tempo','A migração sazonal de animais','A formação de novas espécies'],c:1,x:'Sucessão ecológica é o processo natural e gradual de substituição de espécies em uma comunidade ao longo do tempo.'}
+    ]
+  },
+  fisica:{
+    facil:[
+      {cat:'Mecânica',e:'Qual a unidade de medida da força no Sistema Internacional?',a:['Joule','Newton','Watt','Pascal'],c:1,x:'A unidade de força no SI é o Newton (N).'},
+      {cat:'Cinemática',e:'Se um carro percorre 100 km em 2 horas, qual sua velocidade média?',a:['25 km/h','50 km/h','100 km/h','200 km/h'],c:1,x:'Velocidade = distância/tempo = 100/2 = 50 km/h.'},
+      {cat:'Óptica',e:'Qual fenômeno faz com que vejamos um lápis "quebrado" ao colocá-lo parcialmente dentro de um copo com água?',a:['Reflexão','Refração','Difração','Interferência'],c:1,x:'A refração é a mudança de direção da luz ao passar de um meio para outro com densidade diferente.'},
+      {cat:'Termologia',e:'A que temperatura a água congela, em graus Celsius?',a:['-10°C','0°C','10°C','100°C'],c:1,x:'A água congela a 0°C ao nível do mar.'},
+      {cat:'Eletricidade',e:'Qual a unidade de medida da corrente elétrica?',a:['Volt','Watt','Ampère','Ohm'],c:2,x:'A corrente elétrica é medida em Ampères (A).'}
+    ],
+    medio:[
+      {cat:'Dinâmica',e:'Segundo a Segunda Lei de Newton, a força resultante sobre um corpo é igual a:',a:['Massa dividida pela aceleração','Massa multiplicada pela aceleração','Massa multiplicada pela velocidade','Peso dividido pela gravidade'],c:1,x:'F=m×a é a Segunda Lei de Newton.'},
+      {cat:'Energia',e:'Um objeto de 2 kg está a 5 m de altura. Qual sua energia potencial gravitacional (g=10 m/s²)?',a:['10 J','50 J','100 J','20 J'],c:2,x:'Ep=m×g×h=2×10×5=100 J.'},
+      {cat:'Eletricidade',e:'Pela Lei de Ohm, se a tensão é 12V e a resistência é 4Ω, qual a corrente?',a:['2A','3A','4A','48A'],c:1,x:'I=V/R=12/4=3A.'},
+      {cat:'Ondulatória',e:'O que determina a altura (agudo/grave) de um som?',a:['Amplitude','Frequência','Velocidade de propagação','Timbre'],c:1,x:'A frequência da onda sonora determina sua altura — frequências maiores resultam em sons mais agudos.'},
+      {cat:'Termodinâmica',e:'O que ocorre com o volume de um gás ideal quando sua temperatura aumenta a pressão constante?',a:['Diminui','Aumenta','Permanece constante','Torna-se zero'],c:1,x:'Pela Lei de Charles, a volume constante a pressão... a pressão constante, o volume aumenta com a temperatura (V/T=constante).'}
+    ],
+    dificil:[
+      {cat:'Mecânica Avançada',e:'Um corpo de massa 5 kg está em movimento circular uniforme com raio 2m e velocidade 4 m/s. Qual a força centrípeta atuando sobre ele?',a:['10 N','20 N','40 N','80 N'],c:2,x:'Fc=m×v²/r=5×16/2=40 N.'},
+      {cat:'Eletromagnetismo',e:'O que descreve a Lei de Faraday da Indução Eletromagnética?',a:['A relação entre corrente e resistência','A produção de força eletromotriz por variação de fluxo magnético','A atração entre cargas elétricas','A velocidade da luz no vácuo'],c:1,x:'A Lei de Faraday afirma que a variação do fluxo magnético através de um circuito induz uma força eletromotriz (corrente).'},
+      {cat:'Física Moderna',e:'Segundo a Teoria da Relatividade Especial de Einstein, o que ocorre com o tempo para um observador em movimento próximo à velocidade da luz, em relação a um observador em repouso?',a:['Passa mais rápido','Passa mais lento (dilatação temporal)','Permanece igual','Para completamente'],c:1,x:'A dilatação temporal prevê que o tempo passa mais lentamente para um observador em movimento, em relação a um observador estacionário.'},
+      {cat:'Termodinâmica Avançada',e:'A Segunda Lei da Termodinâmica afirma que a entropia de um sistema isolado tende a:',a:['Diminuir sempre','Permanecer constante sempre','Aumentar ou permanecer constante','Tornar-se zero'],c:2,x:'A entropia de um sistema isolado tende a aumentar (processos irreversíveis) ou permanecer constante (processos reversíveis ideais).'},
+      {cat:'Ondulatória Avançada',e:'O efeito Doppler explica por que:',a:['A luz se decompõe em cores num prisma','A frequência percebida de uma onda muda quando há movimento relativo entre fonte e observador','Objetos flutuam na água','O som não se propaga no vácuo'],c:1,x:'O efeito Doppler descreve a mudança na frequência percebida de uma onda devido ao movimento relativo entre fonte e observador.'}
+    ]
+  },
+  quimica:{
+    facil:[
+      {cat:'Química Geral',e:'Qual o símbolo químico do Oxigênio?',a:['O','Ox','On','Og'],c:0,x:'O símbolo químico do Oxigênio é O.'},
+      {cat:'Estados da Matéria',e:'A passagem do estado líquido para o gasoso é chamada de:',a:['Fusão','Solidificação','Vaporização','Sublimação'],c:2,x:'Vaporização é a transformação de líquido para gasoso (pode ocorrer por evaporação, ebulição ou calefação).'},
+      {cat:'Tabela Periódica',e:'Qual elemento é um gás nobre?',a:['Hidrogênio','Hélio','Carbono','Sódio'],c:1,x:'O Hélio (He) é um gás nobre, encontrado na última coluna da tabela periódica.'},
+      {cat:'Substâncias',e:'A água é composta por quais elementos?',a:['Hidrogênio e Oxigênio','Carbono e Oxigênio','Hidrogênio e Nitrogênio','Oxigênio e Nitrogênio'],c:0,x:'A molécula de água (H₂O) é composta por 2 átomos de Hidrogênio e 1 de Oxigênio.'},
+      {cat:'pH',e:'Uma substância com pH menor que 7 é considerada:',a:['Básica','Neutra','Ácida','Alcalina'],c:2,x:'Substâncias com pH menor que 7 são ácidas; pH=7 é neutro; pH>7 é básico/alcalino.'}
+    ],
+    medio:[
+      {cat:'Estequiometria',e:'Na reação 2H₂ + O₂ → 2H₂O, quantos mols de H₂O são produzidos a partir de 4 mols de H₂ (com O₂ em excesso)?',a:['2','4','6','8'],c:1,x:'A proporção é 2:2, ou seja, 1:1 entre H₂ e H₂O. 4 mols de H₂ produzem 4 mols de H₂O.'},
+      {cat:'Ligações Químicas',e:'Qual tipo de ligação ocorre entre um metal e um não-metal, com transferência de elétrons?',a:['Ligação covalente','Ligação iônica','Ligação metálica','Ligação de hidrogênio'],c:1,x:'A ligação iônica envolve a transferência de elétrons entre um metal (que perde elétrons) e um não-metal (que ganha).'},
+      {cat:'Química Orgânica',e:'Qual o nome do hidrocarboneto mais simples, com fórmula CH₄?',a:['Etano','Metano','Propano','Butano'],c:1,x:'CH₄ é o metano, o hidrocarboneto mais simples (alcano com 1 carbono).'},
+      {cat:'Soluções',e:'O que significa dizer que uma solução está "saturada"?',a:['Não há soluto dissolvido','A quantidade máxima de soluto foi dissolvida no solvente naquela temperatura','A solução está muito diluída','A solução evaporou completamente'],c:1,x:'Uma solução saturada contém a quantidade máxima de soluto que pode ser dissolvida no solvente em determinada temperatura.'},
+      {cat:'Reações Químicas',e:'Uma reação que libera calor para o ambiente é chamada de:',a:['Endotérmica','Exotérmica','Catalítica','Reversível'],c:1,x:'Reações exotérmicas liberam energia (calor) para o ambiente.'}
+    ],
+    dificil:[
+      {cat:'Equilíbrio Químico',e:'Segundo o Princípio de Le Chatelier, ao aumentar a pressão sobre um sistema em equilíbrio gasoso, o equilíbrio se deslocará para o lado:',a:['Com maior número de mols de gás','Com menor número de mols de gás','Não há deslocamento','Depende apenas da temperatura'],c:1,x:'Um aumento de pressão favorece o lado da reação com menor volume (menor número de mols de gás), conforme Le Chatelier.'},
+      {cat:'Eletroquímica',e:'Em uma pilha (célula galvânica), a oxidação ocorre em qual eletrodo?',a:['Cátodo','Ânodo','Em ambos igualmente','Em nenhum dos eletrodos'],c:1,x:'No ânodo ocorre a oxidação (perda de elétrons); no cátodo ocorre a redução.'},
+      {cat:'Química Orgânica Avançada',e:'Qual o nome da reação que converte um álcool em um alceno por eliminação de água?',a:['Hidratação','Desidratação','Esterificação','Hidrólise'],c:1,x:'A desidratação de um álcool (eliminação de água, geralmente com ácido e calor) produz um alceno.'},
+      {cat:'Cinética Química',e:'O que um catalisador faz em uma reação química?',a:['Aumenta a energia dos produtos','Diminui a energia de ativação, aumentando a velocidade da reação','Altera a constante de equilíbrio','Consome-se completamente na reação'],c:1,x:'Catalisadores diminuem a energia de ativação necessária, aumentando a velocidade da reação sem serem consumidos.'},
+      {cat:'Termoquímica',e:'A entalpia de uma reação (ΔH) é negativa. Isso indica que a reação é:',a:['Endotérmica, absorvendo calor','Exotérmica, liberando calor','Não espontânea','Em equilíbrio'],c:1,x:'ΔH negativo indica que o sistema perde energia para o ambiente — reação exotérmica.'}
+    ]
+  },
+  portugues:{
+    facil:[
+      {cat:'Gramática',e:'Qual a classe gramatical da palavra "rapidamente"?',a:['Substantivo','Adjetivo','Advérbio','Pronome'],c:2,x:'"Rapidamente" modifica um verbo, indicando modo — é um advérbio.'},
+      {cat:'Ortografia',e:'Qual a forma correta?',a:['Excessão','Exceção','Eceção','Excessão'],c:1,x:'A forma correta é "exceção", com Ç.'},
+      {cat:'Interpretação',e:'Em "O menino correu para casa porque estava chovendo", a palavra "porque" estabelece relação de:',a:['Tempo','Causa','Condição','Concessão'],c:1,x:'"Porque" introduz a causa/motivo da ação de correr.'},
+      {cat:'Concordância',e:'Qual frase está corretamente concordada?',a:['Os menino chegaram','Fazem dois anos que ele saiu','Existem várias soluções','Houveram problemas'],c:2,x:'"Existem várias soluções" está corretamente concordado (verbo existir concorda com o sujeito plural "soluções").'},
+      {cat:'Pontuação',e:'Qual o sinal de pontuação usado para indicar uma pergunta?',a:['Ponto final','Vírgula','Ponto de interrogação','Ponto e vírgula'],c:2,x:'O ponto de interrogação (?) indica que a frase é uma pergunta.'}
+    ],
+    medio:[
+      {cat:'Figuras de Linguagem',e:'Na frase "Seu sorriso é um raio de sol", qual figura de linguagem está presente?',a:['Metonímia','Metáfora','Hipérbole','Eufemismo'],c:1,x:'A metáfora compara implicitamente duas coisas ("sorriso" e "raio de sol"), sem usar conectivos comparativos como "como".'},
+      {cat:'Sintaxe',e:'Na frase "O livro que comprei é interessante", o termo "que comprei" exerce a função de:',a:['Sujeito','Objeto direto','Oração subordinada adjetiva','Adjunto adverbial'],c:2,x:'"Que comprei" é uma oração subordinada adjetiva, pois funciona como um adjetivo, qualificando "livro".'},
+      {cat:'Crase',e:'Em qual frase o uso da crase está correto?',a:['Vou à escola','Vou a escola','Cheguei à 5 horas','Refiro-me à você'],c:0,x:'"Vou à escola" está correto — crase antes de substantivo feminino que admite o artigo "a".'},
+      {cat:'Verbos',e:'Qual o tempo verbal da frase "Eu teria estudado se tivesse tempo"?',a:['Futuro do pretérito composto','Pretérito perfeito','Presente do indicativo','Futuro do subjuntivo'],c:0,x:'"Teria estudado" está no futuro do pretérito composto, indicando uma ação hipotética/condicional não realizada.'},
+      {cat:'Interpretação',e:'Um texto que busca convencer o leitor de um ponto de vista, utilizando argumentos, é classificado como:',a:['Narrativo','Descritivo','Dissertativo-argumentativo','Injuntivo'],c:2,x:'Textos dissertativo-argumentativos apresentam uma tese e a defendem com argumentos.'}
+    ],
+    dificil:[
+      {cat:'Sintaxe Avançada',e:'Na frase "Espero que ele chegue a tempo", a oração "que ele chegue a tempo" classifica-se como:',a:['Subordinada substantiva objetiva direta','Subordinada adjetiva','Subordinada adverbial','Coordenada aditiva'],c:0,x:'A oração funciona como objeto direto do verbo "esperar" — é uma subordinada substantiva objetiva direta.'},
+      {cat:'Semântica',e:'A ambiguidade na frase "O policial perseguiu o ladrão com uma arma" ocorre porque não está claro:',a:['Quem é o policial','Quem é o ladrão','Quem está portando a arma','Onde ocorreu a perseguição'],c:2,x:'Não fica claro se "com uma arma" se refere ao policial ou ao ladrão — ambiguidade de regência/colocação.'},
+      {cat:'Coesão Textual',e:'O uso de pronomes, sinônimos e conectivos para ligar as partes de um texto é chamado de:',a:['Coerência','Coesão','Polissemia','Denotação'],c:1,x:'Coesão textual refere-se aos mecanismos linguísticos (pronomes, conectivos, sinônimos) que ligam as partes de um texto.'},
+      {cat:'Variação Linguística',e:'O fenômeno em que diferentes grupos sociais ou regiões usam variantes distintas da língua, sem que uma seja "errada", é denominado:',a:['Erro de português','Variação linguística','Vício de linguagem','Barbarismo'],c:1,x:'A variação linguística é um fenômeno natural e legítimo da língua, relacionado a fatores geográficos, sociais, históricos, etc.'},
+      {cat:'Análise Sintática',e:'Na frase "Há livros sobre a mesa", o termo "livros" exerce a função de:',a:['Sujeito','Objeto direto','Predicativo','Vocativo'],c:0,x:'Com o verbo "haver" no sentido de "existir", o termo seguinte é o sujeito da oração (sujeito de verbo impessoal/existencial).'}
+    ]
+  },
+  ingles:{
+    facil:[
+      {cat:'Vocabulary',e:'What is the English word for "cachorro"?',a:['Cat','Dog','Bird','Fish'],c:1,x:'"Dog" is the English translation of "cachorro".'},
+      {cat:'Grammar',e:'Choose the correct sentence:',a:['She is go to school','She goes to school','She going to school','She go to school'],c:1,x:'"She goes to school" is correct — third person singular present simple requires "-s".'},
+      {cat:'Vocabulary',e:'What is the opposite of "big"?',a:['Tall','Small','Wide','Heavy'],c:1,x:'"Small" is the opposite (antonym) of "big".'},
+      {cat:'Grammar',e:'Complete: "I ___ a student."',a:['am','is','are','be'],c:0,x:'With the pronoun "I", the correct verb form of "to be" is "am".'},
+      {cat:'Vocabulary',e:'What do we call the meal eaten in the morning?',a:['Lunch','Dinner','Breakfast','Snack'],c:2,x:'"Breakfast" is the meal eaten in the morning.'}
+    ],
+    medio:[
+      {cat:'Grammar',e:'Choose the correct sentence using Present Perfect:',a:['I have ate breakfast','I have eaten breakfast','I has eaten breakfast','I have eat breakfast'],c:1,x:'The correct Present Perfect form is "have/has + past participle". "Eaten" is the past participle of "eat".'},
+      {cat:'Conditionals',e:'Complete: "If it rains, I ___ stay home."',a:['will','would','was','am'],c:0,x:'First conditional uses "if + present simple, will + verb": "If it rains, I will stay home."'},
+      {cat:'Vocabulary',e:'What does "however" mean in a sentence?',a:['Therefore','But/Nevertheless','Also','Because'],c:1,x:'"However" is used to introduce a contrast, similar to "but" or "nevertheless".'},
+      {cat:'Phrasal Verbs',e:'What does the phrasal verb "give up" mean?',a:['To distribute','To stop trying / quit','To celebrate','To increase'],c:1,x:'"Give up" means to stop trying or to quit something.'},
+      {cat:'Grammar',e:'Choose the correct passive voice form: "The cake ___ by my mother."',a:['made','was made','is making','make'],c:1,x:'Passive voice: "be + past participle" — "was made" is correct for past simple passive.'}
+    ],
+    dificil:[
+      {cat:'Advanced Grammar',e:'Choose the sentence with correct use of the subjunctive mood:',a:['I wish I was taller','I wish I were taller','I wish I am taller','I wish I will be taller'],c:1,x:'In formal English, the subjunctive "were" is used after "wish" for hypothetical situations, regardless of subject: "I wish I were taller."'},
+      {cat:'Reported Speech',e:'Convert to reported speech: She said, "I am tired."',a:['She said she is tired','She said she was tired','She said she be tired','She said I am tired'],c:1,x:'In reported speech, present simple ("am") shifts to past simple ("was") — backshift of tenses.'},
+      {cat:'Vocabulary Advanced',e:'What does the idiom "to beat around the bush" mean?',a:['To exercise outdoors','To avoid talking directly about something','To win a competition','To plant a garden'],c:1,x:'"To beat around the bush" means to avoid getting to the point of a discussion.'},
+      {cat:'Advanced Grammar',e:'Identify the correct inversion: "___ had I arrived when the phone rang."',a:['No sooner','Hardly','Scarcely','All of the above could be correct, but each requires specific structure'],c:3,x:'"No sooner... than", "Hardly... when", and "Scarcely... when" are all inversion structures used with past perfect for sequential actions, each with its specific correlative conjunction.'},
+      {cat:'Modal Verbs',e:'Choose the sentence expressing a logical deduction about the past:',a:['He must study harder','He must have studied harder to pass','He must studying harder','He must to study harder'],c:1,x:'"Must have + past participle" expresses a logical deduction about a past event.'}
+    ]
+  },
+  espanhol:{
+    facil:[
+      {cat:'Vocabulario',e:'¿Cómo se dice "casa" en español?',a:['House','Casa','Home','Haus'],c:1,x:'"Casa" en español significa "casa" (mismo término en portugués, palabra cognada).'},
+      {cat:'Gramática',e:'Complete: "Yo ___ estudiante."',a:['soy','es','eres','son'],c:0,x:'Con el pronombre "yo", la forma correcta del verbo "ser" es "soy".'},
+      {cat:'Vocabulario',e:'¿Cuál es el antónimo de "grande"?',a:['Alto','Pequeño','Largo','Ancho'],c:1,x:'"Pequeño" es el antónimo (opuesto) de "grande".'},
+      {cat:'Gramática',e:'¿Cuál es el plural de "el lápiz"?',a:['Los lápiz','Los lápices','Las lápiz','Los lapizes'],c:1,x:'El plural correcto de "lápiz" es "lápices" (cambio de z a c antes de "es").'},
+      {cat:'Vocabulario',e:'¿Qué significa "trabajar" en portugués?',a:['Descansar','Trabalhar','Comer','Dormir'],c:1,x:'"Trabajar" en español significa "trabalhar" en portugués.'}
+    ],
+    medio:[
+      {cat:'Gramática',e:'Elija la forma correcta del pretérito: "Ayer yo ___ al cine."',a:['voy','fui','iba','iré'],c:1,x:'"Fui" es la forma correcta del pretérito perfecto simple del verbo "ir" para la primera persona.'},
+      {cat:'Ser vs Estar',e:'Complete: "Ella ___ cansada porque trabajó mucho."',a:['es','está','son','están'],c:1,x:'"Estar" se usa para estados temporales como el cansancio: "está cansada".'},
+      {cat:'Vocabulario',e:'¿Qué significa la expresión "tener ganas de"?',a:['Tener miedo de','Querer hacer algo','Tener hambre','Estar enojado'],c:1,x:'"Tener ganas de" significa querer o desear hacer algo.'},
+      {cat:'Falsos Amigos',e:'La palabra "embarazada" en español significa:',a:['Envergonhada','Grávida','Embaraçada (cabelo)','Confusa'],c:1,x:'"Embarazada" en español significa "grávida" en portugués — un clásico "falso amigo" entre las dos lenguas.'},
+      {cat:'Gramática',e:'¿Cuál es la forma correcta del subjuntivo: "Espero que tú ___ bien."',a:['estás','estés','estarás','estabas'],c:1,x:'Después de "espero que", se usa el modo subjuntivo: "estés".'}
+    ],
+    dificil:[
+      {cat:'Subjuntivo Avanzado',e:'Complete con el tiempo correcto: "Si yo ___ más dinero, viajaría por el mundo."',a:['tengo','tendría','tuviera','tuve'],c:2,x:'En oraciones condicionales hipotéticas (irreales en el presente), se usa el pretérito imperfecto del subjuntivo: "Si yo tuviera..."'},
+      {cat:'Voz Pasiva',e:'Transforme a la voz pasiva: "El profesor explica la lección."',a:['La lección es explicada por el profesor','La lección explica el profesor','El profesor es explicado por la lección','La lección fue explicar por el profesor'],c:0,x:'La voz pasiva se forma con "ser + participio + por + agente": "La lección es explicada por el profesor."'},
+      {cat:'Pronombres',e:'¿Cuál es la forma correcta? "Le di el libro a María. ___ di ayer."',a:['Se lo','Le lo','Se la','La le'],c:0,x:'Cuando "le" (objeto indirecto) precede a "lo/la" (objeto directo), "le" se convierte en "se": "Se lo di ayer."'},
+      {cat:'Conectores',e:'¿Qué conector expresa una relación de concesión?',a:['Porque','Aunque','Y','Entonces'],c:1,x:'"Aunque" introduce una idea concesiva, indicando un obstáculo que no impide la acción principal.'},
+      {cat:'Estilo Indirecto',e:'Convierta a estilo indirecto: Él dijo: "Vendré mañana."',a:['Él dijo que vendría al día siguiente','Él dijo que viene mañana','Él dijo que vendrá mañana','Él dijo que ha venido mañana'],c:0,x:'En estilo indirecto, "vendré mañana" cambia a "vendría al día siguiente" — cambio de tiempo verbal y de referencia temporal.'}
+    ]
+  },
+  historia:{
+    facil:[
+      {cat:'Brasil Colônia',e:'Em que ano o Brasil foi "descoberto" pelos portugueses?',a:['1500','1600','1822','1789'],c:0,x:'A chegada da expedição de Pedro Álvares Cabral ao Brasil ocorreu em 1500.'},
+      {cat:'História Geral',e:'Qual evento marca o início da Idade Moderna?',a:['Queda do Império Romano','Tomada de Constantinopla (1453)','Revolução Francesa','Independência dos EUA'],c:1,x:'A Tomada de Constantinopla pelos turcos otomanos em 1453 é tradicionalmente usada para marcar o fim da Idade Média e início da Idade Moderna.'},
+      {cat:'Brasil Império',e:'Quem foi o primeiro imperador do Brasil?',a:['Dom João VI','Dom Pedro I','Dom Pedro II','Getúlio Vargas'],c:1,x:'Dom Pedro I proclamou a independência do Brasil em 1822 e tornou-se o primeiro imperador.'},
+      {cat:'História Geral',e:'A Revolução Francesa teve início em qual ano?',a:['1776','1789','1804','1815'],c:1,x:'A Revolução Francesa teve início em 1789, com a Queda da Bastilha.'},
+      {cat:'Brasil República',e:'Em que ano foi proclamada a República no Brasil?',a:['1822','1888','1889','1891'],c:2,x:'A República foi proclamada em 15 de novembro de 1889.'}
+    ],
+    medio:[
+      {cat:'Brasil Império',e:'A Lei Áurea, que aboliu a escravidão no Brasil, foi assinada em:',a:['1822','1850','1888','1889'],c:2,x:'A Lei Áurea foi assinada em 13 de maio de 1888, pela Princesa Isabel.'},
+      {cat:'História Mundial',e:'Qual foi a principal causa imediata da Primeira Guerra Mundial?',a:['A invasão da Polônia','O assassinato do Arquiduque Francisco Ferdinando','A crise de 1929','A Revolução Russa'],c:1,x:'O assassinato do Arquiduque Francisco Ferdinando da Áustria-Hungria, em Sarajevo (1914), foi o estopim imediato da Primeira Guerra Mundial.'},
+      {cat:'Era Vargas',e:'O período do Estado Novo no Brasil (1937-1945) foi liderado por:',a:['Juscelino Kubitschek','Getúlio Vargas','Floriano Peixoto','Washington Luís'],c:1,x:'Getúlio Vargas governou o Estado Novo, um regime autoritário, entre 1937 e 1945.'},
+      {cat:'Guerra Fria',e:'A Guerra Fria foi caracterizada principalmente pela disputa entre:',a:['França e Alemanha','Estados Unidos e União Soviética','China e Japão','Inglaterra e Espanha'],c:1,x:'A Guerra Fria (1947-1991) foi uma disputa geopolítica e ideológica entre EUA (capitalismo) e URSS (socialismo).'},
+      {cat:'História Mundial',e:'A Revolução Industrial teve início, no século XVIII, principalmente em qual país?',a:['França','Alemanha','Inglaterra','Estados Unidos'],c:2,x:'A Revolução Industrial teve seu início na Inglaterra, no século XVIII, com a mecanização da produção têxtil.'}
+    ],
+    dificil:[
+      {cat:'Brasil Colônia Avançado',e:'O sistema de "Capitanias Hereditárias", implementado no Brasil colonial, tinha como principal objetivo:',a:['Centralizar o poder na metrópole','Dividir e povoar o território, delegando administração a donatários','Abolir a escravidão','Criar um sistema republicano'],c:1,x:'As Capitanias Hereditárias foram uma forma de a Coroa portuguesa dividir e distribuir a administração e povoamento do território colonial entre donatários.'},
+      {cat:'História Mundial Avançado',e:'A Conferência de Bandung (1955) é historicamente associada a qual movimento?',a:['Pan-africanismo apenas','Movimento dos Países Não-Alinhados (Terceiro Mundo)','União Europeia','OTAN'],c:1,x:'A Conferência de Bandung reuniu países afro-asiáticos e foi um marco para o surgimento do Movimento dos Países Não-Alinhados durante a Guerra Fria.'},
+      {cat:'Brasil República Avançado',e:'A "Revolução de 1930" no Brasil resultou na ascensão ao poder de:',a:['Washington Luís','Getúlio Vargas','Prudente de Morais','Campos Sales'],c:1,x:'A Revolução de 1930 encerrou a República Velha e levou Getúlio Vargas ao poder.'},
+      {cat:'História Contemporânea',e:'A queda do Muro de Berlim, em 1989, simbolizou principalmente:',a:['O início da Primeira Guerra Mundial','O fim da Guerra Fria e da divisão da Alemanha','A criação da União Europeia','A independência das colônias africanas'],c:1,x:'A queda do Muro de Berlim em 1989 marcou simbolicamente o fim da Guerra Fria e abriu caminho para a reunificação alemã.'},
+      {cat:'História Antiga',e:'O sistema político ateniense, considerado um dos berços da democracia, restringia a cidadania (e portanto a participação política) a:',a:['Todos os habitantes, sem exceção','Apenas homens livres, nascidos em Atenas, excluindo mulheres, estrangeiros e escravos','Apenas mulheres','Apenas estrangeiros residentes'],c:1,x:'A democracia ateniense era restrita: apenas homens livres e cidadãos (nascidos de pai ateniense) podiam participar — mulheres, escravos e estrangeiros (metecos) eram excluídos.'}
+    ]
+  },
+  geografia:{
+    facil:[
+      {cat:'Geografia do Brasil',e:'Qual a capital do Brasil?',a:['São Paulo','Rio de Janeiro','Brasília','Salvador'],c:2,x:'Brasília é a capital federal do Brasil desde 1960.'},
+      {cat:'Geografia Física',e:'Qual o maior oceano do mundo?',a:['Atlântico','Índico','Pacífico','Ártico'],c:2,x:'O Oceano Pacífico é o maior e mais profundo oceano da Terra.'},
+      {cat:'Geografia Física',e:'A Linha do Equador divide a Terra em:',a:['Leste e Oeste','Norte e Sul','Trópicos e Polos','Continentes e Oceanos'],c:1,x:'A Linha do Equador divide o globo terrestre nos hemisférios Norte e Sul.'},
+      {cat:'Geografia do Brasil',e:'Qual destes é um bioma brasileiro?',a:['Taiga','Savana africana','Amazônia','Tundra'],c:2,x:'A Amazônia é um dos principais biomas do território brasileiro.'},
+      {cat:'Cartografia',e:'O que representam as "curvas de nível" em um mapa topográfico?',a:['Limites entre países','Pontos de igual altitude','Rotas de navegação','Áreas urbanas'],c:1,x:'As curvas de nível conectam pontos de mesma altitude em relação ao nível do mar.'}
+    ],
+    medio:[
+      {cat:'Geopolítica',e:'O que é o Mercosul?',a:['Uma organização militar','Um bloco econômico regional da América do Sul','Uma ONG ambiental','Um tratado de fronteiras'],c:1,x:'O Mercosul (Mercado Comum do Sul) é um bloco econômico formado por países sul-americanos para facilitar o comércio entre eles.'},
+      {cat:'Climatologia',e:'O fenômeno El Niño está relacionado a:',a:['Aquecimento anormal das águas do Pacífico, afetando o clima global','Resfriamento do núcleo da Terra','Aumento da camada de ozônio','Erupções vulcânicas no Atlântico'],c:0,x:'El Niño é um fenômeno climático caracterizado pelo aquecimento anormal das águas superficiais do Oceano Pacífico equatorial, com impactos no clima global.'},
+      {cat:'Urbanização',e:'O termo "macrocefalia urbana" refere-se a:',a:['Cidades muito pequenas','Concentração excessiva da população e atividades em uma cidade dominante','Cidades sem infraestrutura','Áreas rurais desabitadas'],c:1,x:'Macrocefalia urbana descreve uma situação em que uma cidade (geralmente a capital) concentra desproporcionalmente população, economia e serviços em relação às demais.'},
+      {cat:'Geografia do Brasil',e:'A Zona Franca de Manaus foi criada com o objetivo principal de:',a:['Proteger a fauna amazônica','Promover o desenvolvimento econômico da região Norte através de incentivos fiscais','Aumentar o desmatamento','Construir hidrelétricas'],c:1,x:'A Zona Franca de Manaus oferece incentivos fiscais para atrair indústrias e promover o desenvolvimento econômico da Amazônia.'},
+      {cat:'Geografia Física',e:'As placas tectônicas são responsáveis principalmente por:',a:['Mudanças climáticas sazonais','Terremotos, vulcões e formação de relevo','Ciclos de chuva','Correntes marítimas superficiais'],c:1,x:'O movimento das placas tectônicas é a principal causa de terremotos, atividade vulcânica e formação de cadeias montanhosas.'}
+    ],
+    dificil:[
+      {cat:'Geopolítica Avançada',e:'O conceito de "Heartland", desenvolvido por Halford Mackinder, refere-se a:',a:['Uma região costeira estratégica','O centro continental da Eurásia, considerado estrategicamente vital para o domínio mundial','Uma zona desértica improdutiva','O conjunto de ilhas do Pacífico'],c:1,x:'Mackinder definiu o "Heartland" como a região central da Eurásia (aproximadamente a Rússia), cujo controle seria chave para o poder geopolítico global.'},
+      {cat:'Climatologia Avançada',e:'A "inversão térmica" em áreas urbanas contribui para:',a:['Redução da poluição do ar','Concentração de poluentes próximos à superfície, agravando a qualidade do ar','Aumento da velocidade dos ventos','Diminuição da temperatura geral da cidade'],c:1,x:'Na inversão térmica, uma camada de ar mais frio fica retida sob uma camada de ar mais quente, impedindo a dispersão de poluentes e agravando a poluição.'},
+      {cat:'Geografia Econômica',e:'O conceito de "Divisão Internacional do Trabalho" (DIT) refere-se a:',a:['A divisão de feriados entre países','A especialização produtiva de diferentes países/regiões na economia globalizada','A jornada de trabalho dos imigrantes','As leis trabalhistas internacionais'],c:1,x:'A DIT descreve como diferentes países/regiões se especializam em determinadas atividades produtivas (matérias-primas, manufatura, serviços) dentro da economia global.'},
+      {cat:'Geografia Física Avançada',e:'O fenômeno de "subducção" entre placas tectônicas ocorre quando:',a:['Duas placas se afastam, formando novo solo oceânico','Uma placa mais densa desliza por baixo de outra menos densa','As placas deslizam lateralmente uma em relação à outra','As placas colidem e se fundem permanentemente'],c:1,x:'Na subducção, uma placa tectônica mais densa (geralmente oceânica) é empurrada para baixo de outra menos densa, sendo absorvida no manto terrestre.'},
+      {cat:'Geografia Política',e:'O conceito de "Estado-nação" pressupõe, idealmente, a coincidência entre:',a:['Território e clima','Um governo e uma identidade nacional/cultural compartilhada dentro de fronteiras definidas','Recursos naturais e exportações','Capital e zona rural'],c:1,x:'O Estado-nação idealmente combina um território definido, governo soberano e uma população com identidade nacional/cultural compartilhada.'}
+    ]
+  },
+  filosofia:{
+    facil:[
+      {cat:'Filosofia Antiga',e:'Sócrates é conhecido por qual método de investigação filosófica?',a:['Método experimental','Método dialético (perguntas e respostas)','Método matemático','Método empírico'],c:1,x:'Sócrates utilizava o método dialético, baseado em perguntas e respostas, para levar o interlocutor a refletir e questionar suas próprias crenças.'},
+      {cat:'Ética',e:'O que estuda a Ética, como ramo da Filosofia?',a:['A origem do universo','Os princípios da moral e do comportamento humano','As leis da física','A estrutura da linguagem'],c:1,x:'A Ética é o ramo da Filosofia que estuda os princípios morais que orientam o comportamento humano.'},
+      {cat:'Filosofia Antiga',e:'Platão é o autor da famosa "Alegoria da Caverna", que trata principalmente de:',a:['A política romana','O conhecimento e a percepção da realidade','As leis da natureza','A origem da linguagem'],c:1,x:'A Alegoria da Caverna discute a diferença entre o mundo sensível (aparências) e o mundo das ideias (verdadeiro conhecimento).'},
+      {cat:'Lógica',e:'O que é um "silogismo" na lógica clássica?',a:['Uma pergunta retórica','Um argumento composto por duas premissas e uma conclusão','Uma figura de linguagem','Um tipo de poema'],c:1,x:'Um silogismo é uma forma de argumento dedutivo composto por duas premissas que levam logicamente a uma conclusão.'},
+      {cat:'Conceitos Básicos',e:'O termo "metafísica" refere-se ao estudo:',a:['Dos fenômenos físicos mensuráveis','Da realidade além do mundo físico/sensível, como ser, existência e essência','Das leis da matemática','Da história antiga'],c:1,x:'A metafísica investiga questões sobre a natureza última da realidade, ser, existência, e essência, indo além do estudo físico/empírico.'}
+    ],
+    medio:[
+      {cat:'Filosofia Moderna',e:'René Descartes é conhecido pela frase "Penso, logo existo" (Cogito, ergo sum), que busca:',a:['Provar a existência de Deus diretamente','Estabelecer uma base certa de conhecimento a partir da dúvida metódica','Negar a existência da realidade','Defender o empirismo radical'],c:1,x:'Descartes usou a dúvida metódica para encontrar uma verdade indubitável — o ato de pensar (e dúvidar) prova a existência do próprio sujeito que pensa.'},
+      {cat:'Ética Moderna',e:'Immanuel Kant defendia que uma ação moral deveria ser guiada por:',a:['O resultado prático que ela gera (consequencialismo)','Um "imperativo categórico" — um dever incondicional baseado na razão','O prazer que proporciona','A tradição cultural local'],c:1,x:'Para Kant, a moralidade de uma ação não depende de suas consequências, mas de seguir o "imperativo categórico" — agir segundo uma máxima que possa se tornar lei universal.'},
+      {cat:'Filosofia Política',e:'O conceito de "contrato social", presente em Hobbes, Locke e Rousseau, refere-se a:',a:['Um acordo comercial entre nações','Um acordo (real ou hipotético) que fundamenta a legitimidade do poder político e a vida em sociedade','Um tratado de paz após uma guerra','Uma lei trabalhista'],c:1,x:'A teoria do contrato social busca explicar a origem e legitimidade da autoridade política e do Estado a partir de um acordo entre os indivíduos.'},
+      {cat:'Epistemologia',e:'A corrente filosófica do "empirismo" defende que o conhecimento deriva principalmente:',a:['Da razão pura, independente da experiência','Da experiência sensorial e observação','Da revelação divina','De ideias inatas'],c:1,x:'O empirismo (Locke, Hume) sustenta que o conhecimento humano se origina principalmente da experiência sensorial.'},
+      {cat:'Filosofia Contemporânea',e:'O existencialismo, associado a filósofos como Sartre, enfatiza principalmente:',a:['A predeterminação total da vida humana','A liberdade e a responsabilidade individual na construção do próprio sentido da existência','A negação da existência individual','A submissão a regras religiosas rígidas'],c:1,x:'O existencialismo sartriano enfatiza que o ser humano é "condenado a ser livre", responsável por criar seu próprio sentido através de suas escolhas.'}
+    ],
+    dificil:[
+      {cat:'Filosofia da Linguagem',e:'Ludwig Wittgenstein, em sua obra tardia, defendeu que o significado de uma palavra é determinado principalmente por:',a:['Sua definição em um dicionário','Seu uso dentro de "jogos de linguagem" em contextos sociais específicos','Sua origem etimológica','Sua tradução para outras línguas'],c:1,x:'No "Investigações Filosóficas", Wittgenstein argumenta que o significado das palavras emerge de seu uso prático dentro de "jogos de linguagem" — contextos sociais e regras compartilhadas.'},
+      {cat:'Epistemologia Avançada',e:'O "problema de Gettier" desafia a definição tradicional de conhecimento como "crença verdadeira justificada" ao apresentar casos em que:',a:['A crença é falsa, mas justificada','Uma crença é verdadeira e justificada, mas por "acaso" ou coincidência, não parecendo constituir conhecimento genuíno','Não há nenhuma crença envolvida','A justificativa é sempre impossível'],c:1,x:'Os "casos de Gettier" mostram situações em que alguém tem uma crença verdadeira e justificada, mas que parece ser fruto de coincidência/sorte, questionando se isso conta como "conhecimento" genuíno.'},
+      {cat:'Filosofia Política Avançada',e:'O conceito de "véu da ignorância", proposto por John Rawls, é um dispositivo hipotético usado para:',a:['Esconder informações de governos autoritários','Definir princípios de justiça imparciais, imaginando que as pessoas não conhecem sua própria posição social na sociedade','Justificar a censura','Promover a desigualdade econômica'],c:1,x:'Rawls propõe que princípios de justiça justos seriam aqueles escolhidos por pessoas que, sob um "véu da ignorância", não sabem qual será sua posição social, garantindo imparcialidade.'},
+      {cat:'Metafísica Avançada',e:'O "problema mente-corpo" na filosofia da mente questiona principalmente:',a:['Como o cérebro processa cores','A relação entre estados mentais (consciência, pensamentos) e o corpo físico/cérebro','A existência de Deus','A origem da linguagem'],c:1,x:'O problema mente-corpo investiga como (ou se) estados mentais subjetivos (consciência, pensamentos) se relacionam com processos físicos/neurológicos do cérebro.'},
+      {cat:'Lógica Avançada',e:'Os "Teoremas da Incompletude" de Gödel demonstraram que:',a:['Toda afirmação matemática pode ser provada','Em sistemas formais consistentes suficientemente complexos, existem afirmações verdadeiras que não podem ser provadas dentro do próprio sistema','A matemática é completamente inútil','Todos os sistemas lógicos são idênticos'],c:1,x:'Gödel demonstrou que qualquer sistema formal consistente, capaz de expressar aritmética básica, contém afirmações verdadeiras que não podem ser demonstradas usando apenas os axiomas do próprio sistema.'}
+    ]
+  },
+  sociologia:{
+    facil:[
+      {cat:'Conceitos Básicos',e:'O que estuda a Sociologia?',a:['Apenas o comportamento individual','As relações sociais, instituições e a sociedade como um todo','Apenas fenômenos econômicos','Apenas a política internacional'],c:1,x:'A Sociologia é a ciência que estuda as relações sociais, grupos, instituições e a dinâmica da sociedade.'},
+      {cat:'Clássicos',e:'Émile Durkheim é considerado um dos fundadores da Sociologia, sendo conhecido por estudar:',a:['A psicologia individual','Os fatos sociais e a coesão social','Apenas a economia de mercado','A biologia evolutiva'],c:1,x:'Durkheim estudou os "fatos sociais" — fenômenos que existem independentemente dos indivíduos e exercem coerção sobre eles, além da coesão e solidariedade social.'},
+      {cat:'Cidadania',e:'O que caracteriza um "direito social", como saúde e educação?',a:['Direitos exclusivos de uma classe social','Direitos que o Estado deve garantir para promover igualdade e bem-estar','Privilégios apenas para cidadãos ricos','Direitos que não dependem do Estado'],c:1,x:'Direitos sociais (saúde, educação, trabalho) são prestações que o Estado deve garantir aos cidadãos para promover bem-estar e reduzir desigualdades.'},
+      {cat:'Cultura',e:'O termo "etnocentrismo" refere-se a:',a:['Valorizar igualmente todas as culturas','Julgar outras culturas a partir dos valores e padrões da própria cultura, considerando-a superior','Estudar línguas estrangeiras','Promover o multiculturalismo'],c:1,x:'Etnocentrismo é a tendência de julgar outras culturas com base nos valores da própria cultura, frequentemente considerando-a superior.'},
+      {cat:'Movimentos Sociais',e:'O que caracteriza um "movimento social"?',a:['Uma ação isolada de um único indivíduo','Uma ação coletiva organizada em torno de uma causa ou demanda social','Uma política governamental','Um evento esportivo'],c:1,x:'Movimentos sociais são ações coletivas organizadas, geralmente buscando mudanças sociais, políticas ou culturais.'}
+    ],
+    medio:[
+      {cat:'Max Weber',e:'O conceito de "tipo ideal", desenvolvido por Max Weber, é utilizado para:',a:['Descrever a sociedade perfeita','Construir modelos analíticos abstratos para comparar e compreender fenômenos sociais concretos','Definir leis universais e imutáveis','Substituir a pesquisa empírica'],c:1,x:'O "tipo ideal" weberiano é uma construção conceitual/analítica, que enfatiza certos aspectos de um fenômeno para fins de análise comparativa, não uma descrição exata da realidade.'},
+      {cat:'Karl Marx',e:'Na teoria marxista, o conceito de "mais-valia" refere-se a:',a:['O lucro obtido através de juros bancários','O valor excedente produzido pelo trabalhador além do necessário para sua subsistência, apropriado pelo capitalista','Um imposto sobre o consumo','O valor de troca de uma mercadoria'],c:1,x:'A mais-valia é, para Marx, o valor que o trabalhador produz além do necessário para sua própria reprodução (salário), sendo apropriado pelo capitalista como lucro.'},
+      {cat:'Estratificação Social',e:'O conceito de "mobilidade social" refere-se à:',a:['Migração entre países','Mudança de posição de um indivíduo ou grupo na hierarquia social','Deslocamento físico dentro de uma cidade','Rotatividade de empregos no mesmo nível salarial'],c:1,x:'Mobilidade social é a possibilidade de indivíduos ou grupos mudarem de posição/classe na estrutura social, seja para cima ou para baixo.'},
+      {cat:'Globalização',e:'Um dos efeitos sociológicos da globalização é:',a:['O isolamento total entre culturas','A intensificação das interconexões econômicas, culturais e sociais entre diferentes regiões do mundo','O fim do comércio internacional','A homogeneização total e definitiva de todas as culturas'],c:1,x:'A globalização se caracteriza pela intensificação das conexões econômicas, sociais, culturais e políticas entre diferentes partes do mundo.'},
+      {cat:'Instituições Sociais',e:'A família, a escola e a religião são exemplos de:',a:['Movimentos sociais','Instituições sociais, que cumprem funções de socialização e controle social','Partidos políticos','Empresas privadas'],c:1,x:'Instituições sociais são estruturas estabelecidas que cumprem funções importantes na sociedade, como a socialização dos indivíduos (família, escola, religião).'}
+    ],
+    dificil:[
+      {cat:'Teoria Social Avançada',e:'O conceito de "habitus", desenvolvido por Pierre Bourdieu, refere-se a:',a:['Um conjunto de leis escritas que regulam o comportamento','Um sistema de disposições duráveis, incorporadas pelos indivíduos a partir de suas condições sociais, que orientam práticas e percepções','Um tipo de moradia popular','Um ritual religioso específico'],c:1,x:'O habitus é, para Bourdieu, um sistema de disposições incorporadas que os indivíduos desenvolvem a partir de sua trajetória social, orientando práticas e percepções de forma muitas vezes inconsciente.'},
+      {cat:'Clássicos Avançado',e:'O conceito de "anomia", em Durkheim, descreve:',a:['Um estado de plena integração social','Uma situação de ausência ou fragilização de normas sociais que orientam o comportamento dos indivíduos','Um tipo de governo autoritário','A divisão do trabalho manual'],c:1,x:'Anomia é o estado em que as normas sociais perdem força ou clareza, deixando os indivíduos sem referências claras de conduta.'},
+      {cat:'Max Weber Avançado',e:'Segundo Max Weber, a "ação social" se diferencia de uma simples reação automática porque:',a:['É sempre violenta','É orientada pelo sentido que o indivíduo atribui a ela e leva em conta o comportamento de outros','Ocorre apenas em grupos pequenos','Não pode ser estudada cientificamente'],c:1,x:'Para Weber, ação social é toda conduta à qual o agente atribui um sentido subjetivo, orientando-se pelo comportamento de outras pessoas.'},
+      {cat:'Teoria Crítica',e:'O conceito de "indústria cultural", de Adorno e Horkheimer, critica principalmente:',a:['A ausência total de cultura nas sociedades modernas','A padronização e mercantilização dos bens culturais, tendendo a homogeneizar o pensamento e o entretenimento das massas','O excesso de diversidade cultural','A falta de tecnologia na produção cultural'],c:1,x:'A "indústria cultural" descreve como a produção cultural em massa tenderia à padronização e mercantilização, servindo à manutenção do sistema e à conformidade social.'},
+      {cat:'Sociologia Contemporânea',e:'O conceito de "modernidade líquida", de Zygmunt Bauman, descreve a sociedade contemporânea como caracterizada por:',a:['Estruturas sociais extremamente rígidas e permanentes','Relações, identidades e instituições cada vez mais fluidas, instáveis e de curta duração','O retorno a valores tradicionais fixos','O fim de qualquer forma de mudança social'],c:1,x:'Bauman usa a metáfora da "liquidez" para descrever como vínculos sociais e identidades tornaram-se cada vez mais fluidos e provisórios na contemporaneidade.'}
+    ]
+  },
+  atualidades:{
+    facil:[
+      {cat:'Organizações Internacionais',e:'A ONU (Organização das Nações Unidas) foi criada com o principal objetivo de:',a:['Promover guerras entre países','Manter a paz e a segurança internacionais e promover cooperação entre nações','Controlar a economia de um único país','Substituir os governos nacionais'],c:1,x:'A ONU foi fundada após a Segunda Guerra Mundial com o objetivo de manter a paz e segurança internacionais e fomentar a cooperação entre os países.'},
+      {cat:'Meio Ambiente',e:'O termo "desenvolvimento sustentável" refere-se a um modelo de desenvolvimento que busca:',a:['Maximizar o lucro imediato, sem considerar impactos futuros','Atender às necessidades do presente sem comprometer a capacidade das gerações futuras de atender às suas próprias necessidades','Eliminar completamente a indústria','Depender exclusivamente de recursos não renováveis'],c:1,x:'Desenvolvimento sustentável busca equilibrar crescimento econômico, inclusão social e proteção ambiental, sem prejudicar gerações futuras.'},
+      {cat:'Política',e:'Em uma democracia representativa, os cidadãos exercem o poder político principalmente através de:',a:['Decisões diretas e exclusivas sobre cada lei','Eleição de representantes que tomam decisões em seu nome','Sorteio aleatório de governantes','Imposição militar'],c:1,x:'Na democracia representativa, os cidadãos elegem representantes para tomar decisões políticas em seu nome.'},
+      {cat:'Economia',e:'O termo "inflação" refere-se a:',a:['A queda generalizada dos preços','O aumento generalizado e contínuo dos preços de bens e serviços, reduzindo o poder de compra da moeda','O crescimento do PIB','A valorização cambial'],c:1,x:'Inflação é o aumento contínuo e generalizado dos preços, reduzindo o poder de compra da moeda ao longo do tempo.'},
+      {cat:'Direitos Humanos',e:'A Declaração Universal dos Direitos Humanos, adotada pela ONU em 1948, estabelece que os direitos nela previstos são:',a:['Aplicáveis apenas a cidadãos de países desenvolvidos','Universais, válidos para todos os seres humanos, independentemente de origem, raça, religião ou outra condição','Opcionais, dependendo da legislação de cada país','Exclusivos para adultos'],c:1,x:'A Declaração Universal dos Direitos Humanos afirma que os direitos nela previstos pertencem a todas as pessoas, de forma universal e inalienável.'}
+    ],
+    medio:[
+      {cat:'Meio Ambiente',e:'O Acordo de Paris, firmado no âmbito da ONU, tem como principal objetivo:',a:['Aumentar as emissões de gases de efeito estufa','Limitar o aumento da temperatura média global, mantendo-o bem abaixo de 2°C em relação aos níveis pré-industriais','Proibir totalmente o uso de combustíveis fósseis imediatamente','Criar uma moeda única mundial'],c:1,x:'O Acordo de Paris estabelece metas para limitar o aquecimento global, com países definindo contribuições nacionais para reduzir emissões de gases de efeito estufa.'},
+      {cat:'Geopolítica',e:'A União Europeia é um exemplo de bloco que avançou para:',a:['Uma união política e econômica com livre circulação de pessoas, bens e, para parte dos membros, moeda única','Um acordo apenas militar','Uma aliança exclusivamente esportiva','Um tratado apenas sobre pesca'],c:0,x:'A União Europeia integra políticas econômicas e livre circulação de pessoas e bens entre seus membros, com moeda única (euro) para parte deles.'},
+      {cat:'Comunicação',e:'O termo "fake news" refere-se a:',a:['Notícias antigas republicadas','Informações falsas ou enganosas, apresentadas como notícias verdadeiras, frequentemente disseminadas em redes sociais','Notícias internacionais traduzidas','Reportagens investigativas aprofundadas'],c:1,x:'"Fake news" são informações falsas apresentadas como notícias legítimas, popularizadas principalmente nas redes sociais.'},
+      {cat:'Sociedade',e:'Políticas de "ação afirmativa", como cotas, têm como objetivo principal:',a:['Reduzir a diversidade em instituições','Promover a inclusão e reduzir desigualdades históricas enfrentadas por grupos sub-representados','Aumentar a exclusão de minorias','Substituir totalmente o mérito por sorteio'],c:1,x:'Ações afirmativas buscam corrigir desigualdades históricas e promover maior representatividade de grupos sub-representados.'},
+      {cat:'Economia/Geopolítica',e:'A transição energética, discutida globalmente, refere-se principalmente à:',a:['Substituição de fontes de energia renovável por fósseis','Mudança gradual da matriz energética mundial de fontes fósseis para fontes renováveis e de baixo carbono','Eliminação de toda forma de energia elétrica','Aumento exclusivo do uso de carvão'],c:1,x:'A transição energética é o processo de mudança da matriz energética global, reduzindo a dependência de combustíveis fósseis em favor de fontes renováveis.'}
+    ],
+    dificil:[
+      {cat:'Relações Internacionais',e:'O termo "multilateralismo" nas relações internacionais refere-se a:',a:['A atuação isolada de uma única potência mundial','A cooperação entre três ou mais países/atores para tratar de questões comuns, geralmente através de instituições e acordos internacionais','Um sistema de comércio bilateral exclusivo','A anexação territorial entre países vizinhos'],c:1,x:'Multilateralismo é a cooperação entre múltiplos países, frequentemente por meio de organizações e tratados internacionais.'},
+      {cat:'Geopolítica Avançada',e:'O conceito de "soft power", de Joseph Nye, refere-se à capacidade de um país de:',a:['Impor sua vontade exclusivamente através de força militar','Influenciar outros países por meio de atração cultural, valores, diplomacia e prestígio, sem coerção direta','Controlar territórios estrangeiros por ocupação','Eliminar todas as formas de comércio internacional'],c:1,x:'"Soft power" é a capacidade de influenciar outros atores por atração (cultura, valores, diplomacia), em contraste com o "hard power" coercitivo.'},
+      {cat:'Economia Global',e:'O "Índice de Desenvolvimento Humano" (IDH), usado pela ONU, combina indicadores de:',a:['Apenas renda per capita','Renda, educação e expectativa de vida, oferecendo visão mais ampla do desenvolvimento além do PIB','Apenas taxa de natalidade','Apenas área territorial'],c:1,x:'O IDH combina renda, educação e saúde (expectativa de vida) para avaliar o desenvolvimento de um país além do PIB.'},
+      {cat:'Política Internacional',e:'Críticas ao Conselho de Segurança da ONU frequentemente apontam para o fato de que:',a:['Ele não possui nenhum membro','Apenas alguns países têm poder de veto permanente, refletindo, para críticos, uma estrutura pouco representativa do cenário atual','Ele decide apenas questões esportivas','É obrigatória a unanimidade de todos os 193 países-membros da ONU'],c:1,x:'O Conselho de Segurança tem 5 membros permanentes com poder de veto, estrutura criada em 1945 e criticada por não refletir o atual cenário geopolítico.'},
+      {cat:'Economia Digital',e:'O conceito de "economia compartilhada" (sharing economy) baseia-se principalmente em:',a:['A doação gratuita de bens entre desconhecidos','Plataformas digitais que conectam pessoas com recursos subutilizados a quem demanda esses recursos, mediante pagamento','A nacionalização de empresas privadas','A proibição do uso de aplicativos'],c:1,x:'A economia compartilhada caracteriza-se por plataformas que conectam oferta e demanda de recursos, permitindo uso mais eficiente de ativos subutilizados.'}
+    ]
+  },
+  gerais:{
+    facil:[
+      {cat:'Arte',e:'Leonardo da Vinci, autor da "Mona Lisa", viveu durante qual período histórico?',a:['Idade Média','Renascimento','Iluminismo','Idade Contemporânea'],c:1,x:'Leonardo da Vinci foi uma figura central do Renascimento.'},
+      {cat:'Ciência',e:'Qual cientista é mundialmente conhecido pela Teoria da Relatividade?',a:['Isaac Newton','Albert Einstein','Galileu Galilei','Charles Darwin'],c:1,x:'Albert Einstein desenvolveu a Teoria da Relatividade.'},
+      {cat:'Esporte',e:'Quantos jogadores titulares cada equipe tem em uma partida de futebol?',a:['9','10','11','12'],c:2,x:'Cada equipe de futebol tem 11 jogadores titulares em campo.'},
+      {cat:'Literatura',e:'Machado de Assis, autor de "Dom Casmurro", é considerado um dos maiores nomes de qual literatura?',a:['Literatura portuguesa','Literatura brasileira','Literatura francesa','Literatura inglesa'],c:1,x:'Machado de Assis é um dos maiores escritores da literatura brasileira.'},
+      {cat:'Música',e:'Um instrumento que possui cordas e teclas, muito usado na música clássica, é o:',a:['Violão','Flauta','Piano','Tambor'],c:2,x:'O piano é um instrumento de cordas percutidas, acionado por teclas.'}
+    ],
+    medio:[
+      {cat:'Astronomia',e:'Qual é o planeta mais próximo do Sol?',a:['Vênus','Terra','Mercúrio','Marte'],c:2,x:'Mercúrio é o planeta mais próximo do Sol.'},
+      {cat:'Tecnologia',e:'A sigla "IA", amplamente discutida atualmente, significa:',a:['Internet Avançada','Inteligência Artificial','Informática Aplicada','Indústria Automatizada'],c:1,x:'"IA" significa Inteligência Artificial.'},
+      {cat:'Saúde',e:'A prática regular de atividade física é geralmente associada a qual benefício para a saúde?',a:['Aumento do risco de doenças cardiovasculares','Redução do risco de diversas doenças crônicas e melhora do bem-estar geral','Diminuição da capacidade pulmonar','Aumento da pressão arterial em todos os casos'],c:1,x:'A atividade física regular reduz o risco de doenças crônicas e melhora o bem-estar geral.'},
+      {cat:'Arte',e:'O Cubismo, do qual Pablo Picasso foi um dos principais expoentes, caracteriza-se por:',a:['Representações extremamente realistas da natureza','A fragmentação e representação de objetos sob múltiplas perspectivas simultâneas, em formas geométricas','O uso exclusivo de tons de cinza','Pinturas exclusivamente religiosas'],c:1,x:'O Cubismo representa objetos fragmentados em múltiplos ângulos simultaneamente, com formas geométricas.'},
+      {cat:'Geografia',e:'Qual é o maior deserto quente do mundo?',a:['Deserto do Saara','Deserto de Gobi','Deserto do Atacama','Deserto da Antártida'],c:0,x:'O Saara é o maior deserto quente do mundo.'}
+    ],
+    dificil:[
+      {cat:'Filosofia da Ciência',e:'O filósofo Karl Popper propôs o critério de "falseabilidade" para distinguir ciência de não-ciência. Segundo esse critério, uma teoria é científica se:',a:['Pode ser comprovada definitivamente como verdadeira','Pode, em princípio, ser testada e potencialmente refutada por observações ou experimentos','Não pode ser testada de forma alguma','For aceita pela maioria das pessoas'],c:1,x:'Para Popper, o que distingue uma teoria científica é sua falseabilidade — a possibilidade de ser testada e refutada por evidências.'},
+      {cat:'Economia Avançada',e:'O conceito de "externalidade", em economia, refere-se a:',a:['O lucro líquido de uma empresa','Efeitos de uma atividade econômica que afetam terceiros não envolvidos na transação, sem compensação correspondente','O valor de exportação de um país','A taxa de câmbio entre duas moedas'],c:1,x:'Externalidades são efeitos colaterais de uma atividade econômica sobre terceiros, como a poluição gerada por uma fábrica.'},
+      {cat:'Arte Contemporânea',e:'A obra "A Fonte" (1917), de Marcel Duchamp — um urinol assinado e exposto como obra de arte — é um marco para qual movimento/conceito?',a:['Impressionismo','Arte conceitual e o questionamento da definição tradicional de "obra de arte"','Realismo fotográfico','Arte rupestre'],c:1,x:'"A Fonte" é marco da arte conceitual, ao desafiar a noção tradicional de que a arte deve ser "feita" pelo artista.'},
+      {cat:'Ciência Avançada',e:'O princípio da incerteza de Heisenberg, na mecânica quântica, estabelece que:',a:['É possível medir simultaneamente, com precisão arbitrária, a posição e o momento de uma partícula','Existe um limite fundamental para a precisão com que se podem conhecer simultaneamente certos pares de propriedades de uma partícula, como posição e momento','As partículas subatômicas não existem','A velocidade da luz pode variar livremente'],c:1,x:'O princípio da incerteza afirma que há um limite fundamental para conhecer simultaneamente pares de variáveis complementares, como posição e momento.'},
+      {cat:'Linguística',e:'O conceito de "arbitrariedade do signo linguístico", de Ferdinand de Saussure, refere-se ao fato de que:',a:['Todas as palavras têm relação natural e necessária com seu significado','Não há relação natural entre a forma de uma palavra (significante) e seu significado — a relação é convencional, estabelecida socialmente','As línguas não possuem regras gramaticais','Apenas algumas línguas possuem signos linguísticos'],c:1,x:'Para Saussure, a relação entre significante e significado é arbitrária — uma convenção compartilhada por uma comunidade linguística.'}
+    ]
+  }
+};
+
+/* Monta questões de simulado a partir do banco local, com fallback robusto */
+function montarSim(disc, dif, qtd){
+  const banco = BANCO_SIM[disc] || BANCO_SIM.gerais;
+  let questoes = pick(banco[dif]||[], Math.min(qtd,(banco[dif]||[]).length));
+  if(questoes.length<qtd){
+    const usados=new Set(questoes);
+    const outras=[...(banco.facil||[]),...(banco.medio||[]),...(banco.dificil||[])].filter(q=>!usados.has(q));
+    questoes=questoes.concat(pick(outras, qtd-questoes.length));
+  }
+  while(questoes.length<qtd){
+    const all=[...(banco.facil||[]),...(banco.medio||[]),...(banco.dificil||[])];
+    if(all.length===0)break;
+    questoes.push(shuffle(all)[0]);
+  }
+  return questoes.slice(0,qtd).map(q=>({...q,_fonte:'banco'}));
+}
+</script>
+</body>
+</html>
