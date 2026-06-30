@@ -1,0 +1,3853 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VERUS — Concursos Públicos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════
+   RESET & VARIÁVEIS
+═══════════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  /* Azul — agora mais profundo e saturado, em linha com a landing */
+  --blue:#1A56DB;--blue2:#3B7FFF;--blue3:#0F2E7A;--bluelt:#EAF1FF;--bluelt2:#D2E2FF;
+  /* Dourado de acento — usado com moderação, como destaque premium */
+  --gold:#FFB800;--gold2:#FFD15C;--gold3:#B8860A;
+  --green:#16A35A;--green2:#34D399;--greenlt:#E7F9F0;
+  --red:#E5484D;--redlt:#FDEDEE;
+  /* Neutros com leve tom azulado, mais sofisticados que cinza puro */
+  --gray1:#F6F8FC;--gray2:#EAEEF8;--gray3:#D7DEED;--gray4:#8B93AC;--gray5:#3D4566;
+  --white:#fff;--dark:#0B1530;
+  /* Fundo escuro profundo, usado nos cabeçalhos e telas premium */
+  --ink:#050D24;--ink2:#0A1740;--ink3:#0F1F4D;
+  /* Ciano elétrico — acento do efeito hexagonal tech (hero/login) */
+  --cyan:#22D3EE;--cyan2:#67E8F9;
+  --bd:rgba(26,86,219,.16);--bd2:rgba(255,184,0,.45);
+  --sh:0 2px 18px rgba(15,30,80,.08);--sh2:0 8px 32px rgba(15,30,80,.16);
+  --tr:all .22s cubic-bezier(.4,0,.2,1);
+  --r16:16px;--r12:12px;--r8:8px;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Inter',sans-serif;background:var(--gray1);color:var(--dark);}
+
+/* ═══════════════════════════════════════════════
+   SISTEMA DE TELAS — SPA
+   Cada .tela é uma "página" que ocupa 100vh
+   Apenas a .tela.ativa é visível
+═══════════════════════════════════════════════ */
+.tela{
+  display:none;
+  flex-direction:column;
+  width:100%;
+  height:100vh;
+  overflow-y:auto;
+  overflow-x:hidden;
+  position:absolute;
+  top:0;left:0;
+  animation:fadeIn .22s ease;
+}
+.tela.ativa{display:flex;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes brandGlow{
+  0%,100%{text-shadow:0 0 18px rgba(100,149,255,.5),0 0 2px rgba(255,255,255,.2);}
+  50%{text-shadow:0 0 30px rgba(126,179,255,.85),0 0 8px rgba(255,255,255,.4);}
+}
+@keyframes brandOrbit{
+  0%{transform:rotate(0deg) translateX(13px) rotate(0deg);}
+  100%{transform:rotate(360deg) translateX(13px) rotate(-360deg);}
+}
+@keyframes hexDrift{ from{background-position:0 0;} to{background-position:360px 312px;} }
+@keyframes hexDriftRev{ from{background-position:0 0;} to{background-position:-360px -312px;} }
+@keyframes hexFloat{
+  0%,100%{transform:translateY(0) scale(var(--hs,1));}
+  50%{transform:translateY(-14px) scale(var(--hs,1));}
+}
+
+/* ═══════════════════════════════════════════════
+   EFEITO HEXAGONAL TECH — fundo de hero/login
+   Camadas: grade fina → hexágonos contorno → linha
+   de tendência → pontos → hexágonos com glow
+═══════════════════════════════════════════════ */
+.hex-bg{position:absolute;inset:0;overflow:hidden;background:var(--ink);z-index:0;}
+.hex-bg .hex-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(34,211,238,.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34,211,238,.07) 1px, transparent 1px);
+  background-size:42px 42px;
+  mask-image:radial-gradient(ellipse 80% 70% at 70% 20%, black 40%, transparent 85%);
+}
+.hex-bg .hex-layer{position:absolute;inset:-10%;background-repeat:repeat;}
+.hex-bg .hex-layer.l1{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='156' viewBox='0 0 180 156'%3E%3Cpolygon points='45,2 135,2 180,78 135,154 45,154 0,78' fill='none' stroke='%2322D3EE' stroke-opacity='0.10' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-size:180px 156px;
+  opacity:.55;
+  animation:hexDrift 70s linear infinite;
+}
+.hex-bg .hex-layer.l2{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='156' viewBox='0 0 180 156'%3E%3Cpolygon points='45,2 135,2 180,78 135,154 45,154 0,78' fill='none' stroke='%233B7FFF' stroke-opacity='0.16' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-size:90px 78px;background-position:45px 0;
+  opacity:.35;
+  animation:hexDriftRev 90s linear infinite;
+}
+.hex-bg .hex-dots{
+  position:absolute;inset:0;
+  background-image:radial-gradient(rgba(34,211,238,.5) 1px, transparent 1.5px);
+  background-size:14px 14px;
+  mask-image:radial-gradient(ellipse 50% 40% at 80% 12%, black 0%, transparent 70%);
+  opacity:.6;
+}
+.hex-bg .hex-trend{position:absolute;inset:0;opacity:.4;}
+.hex-bg .hex-glow{
+  position:absolute;inset:0;
+  /* Concentra os hexágonos nas bordas/topo, esvaziando o centro
+     onde fica o texto e o card, e esmaecendo perto do rodapé */
+  mask-image:radial-gradient(ellipse 40% 60% at 50% 36%, transparent 50%, black 95%);
+  -webkit-mask-image:radial-gradient(ellipse 40% 60% at 50% 36%, transparent 50%, black 95%);
+}
+.hex-bg .hex-glow.hex-glow-card{
+  /* Variante para telas com um card central único (login) — esvazia
+     uma área central maior, já que não há texto largo, só o card */
+  mask-image:radial-gradient(ellipse 24% 46% at 50% 46%, transparent 60%, black 100%);
+  -webkit-mask-image:radial-gradient(ellipse 24% 46% at 50% 46%, transparent 60%, black 100%);
+}
+.hex-bg .hexg{
+  position:absolute;
+  width:140px;height:121px;
+  clip-path:polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  background:linear-gradient(135deg, rgba(34,211,238,.20), rgba(59,127,255,.04));
+  border:1px solid rgba(34,211,238,.30);
+  filter:drop-shadow(0 0 16px rgba(34,211,238,.2));
+  animation:hexFloat 7s ease-in-out infinite;
+}
+.hex-bg .hex-fade{
+  position:absolute;inset:0;
+  background:linear-gradient(180deg, transparent 0%, var(--ink) 92%);
+}
+
+/* ═══════════════════════════════════════════════
+   NAV UNIVERSAL
+═══════════════════════════════════════════════ */
+.nav{
+  position:sticky;top:0;z-index:200;
+  background:linear-gradient(135deg,var(--ink2),var(--ink3));
+  box-shadow:0 2px 20px rgba(5,13,36,.35);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  padding:0 20px;height:56px;
+  display:flex;align-items:center;gap:12px;
+  flex-shrink:0;
+}
+.nav-logo{
+  font-family:'Playfair Display',serif;
+  font-size:22px;font-weight:900;
+  color:#fff;cursor:pointer;
+  letter-spacing:1px;flex-shrink:0;
+  position:relative;
+  animation:brandGlow 2.6s ease-in-out infinite;
+}
+.nav-logo::before{
+  content:'';position:absolute;left:-16px;top:50%;
+  width:7px;height:7px;border-radius:50%;
+  background:radial-gradient(circle,#FFE8A3,var(--gold) 60%);
+  box-shadow:0 0 14px 3px rgba(255,184,0,.85),0 0 26px 6px rgba(255,184,0,.3);
+  margin-top:-3.5px;
+  animation:brandOrbit 3.2s linear infinite;
+}
+.nav-sep{flex:1;}
+.nav-btn{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.16);
+  color:#fff;font-size:12px;font-weight:600;
+  padding:7px 16px;border-radius:100px;
+  cursor:pointer;transition:var(--tr);
+  font-family:'Inter',sans-serif;white-space:nowrap;
+}
+.nav-btn:hover{background:var(--gold);color:var(--ink);border-color:var(--gold);}
+.nav-btn.gold{background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:700;}
+.nav-btn.gold:hover{background:#fff;color:var(--ink);}
+.nav-user{font-size:12px;color:rgba(255,255,255,.75);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nav-badge{
+  font-size:10px;font-weight:700;
+  padding:3px 10px;border-radius:100px;
+  background:var(--greenlt);color:var(--green);
+  border:1px solid #b2dfdb;
+}
+.nav-badge.trial{background:rgba(255,215,0,.15);color:var(--gold);border-color:rgba(255,215,0,.4);}
+.nav-badge.expirado{background:var(--redlt);color:var(--red);border-color:#ffcdd2;}
+
+/* ═══════════════════════════════════════════════
+   HERO PATTERN (fundo com quadradinhos)
+═══════════════════════════════════════════════ */
+.hero-bg{
+  background:linear-gradient(135deg,var(--ink2) 0%,var(--blue) 140%);
+  position:relative;overflow:hidden;
+}
+.hero-bg::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.hero-line{
+  position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+}
+
+/* ═══════════════════════════════════════════════
+   COMPONENTES COMUNS
+═══════════════════════════════════════════════ */
+.eyebrow{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(255,215,0,.15);border:1px solid rgba(255,215,0,.4);
+  border-radius:100px;padding:4px 16px;
+  font-size:10px;font-weight:700;letter-spacing:2.5px;
+  text-transform:uppercase;color:var(--gold);margin-bottom:12px;
+}
+.section-title{
+  font-size:10px;font-weight:700;letter-spacing:2.5px;
+  text-transform:uppercase;color:var(--gray4);
+  margin-bottom:12px;display:flex;align-items:center;gap:10px;
+}
+.section-title::after{content:'';flex:1;height:1px;background:var(--gray3);}
+
+.card{
+  background:var(--white);border:1.5px solid var(--gray3);
+  border-radius:var(--r16);padding:20px;
+  transition:var(--tr);
+}
+.card:hover{box-shadow:var(--sh2);border-color:var(--blue);}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 24px;border-radius:var(--r12);
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;border:none;transition:var(--tr);
+}
+.btn-primary{background:var(--blue);color:#fff;width:100%;}
+.btn-primary:hover{background:var(--blue2);transform:translateY(-1px);box-shadow:var(--sh2);}
+.btn-gold{background:var(--gold);color:var(--blue);}
+.btn-gold:hover{background:var(--gold2);}
+.btn-outline{background:transparent;color:var(--blue);border:1.5px solid var(--blue);}
+.btn-outline:hover{background:var(--bluelt);}
+.btn-ghost{background:transparent;color:var(--gray4);border:1.5px solid var(--gray3);}
+.btn-ghost:hover{border-color:var(--blue);color:var(--blue);}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-danger:hover{background:#b71c1c;}
+.btn-sm{padding:8px 16px;font-size:12px;border-radius:var(--r8);}
+.btn-full{width:100%;}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important;}
+
+.frm-g{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.frm-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray4);}
+.frm-i{
+  background:var(--gray1);border:1.5px solid var(--gray3);
+  border-radius:var(--r8);padding:11px 14px;
+  color:var(--dark);font-size:14px;font-family:'Inter',sans-serif;
+  transition:var(--tr);outline:none;width:100%;
+}
+.frm-i:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(13,71,199,.08);}
+.frm-i::placeholder{color:var(--gray3);}
+.frm-i.erro{border-color:var(--red);background:var(--redlt);}
+select.frm-i{cursor:pointer;}
+
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:10px;font-weight:700;padding:3px 10px;
+  border-radius:100px;
+}
+.badge-blue{background:var(--bluelt);color:var(--blue);border:1px solid var(--bluelt2);}
+.badge-green{background:var(--greenlt);color:var(--green);border:1px solid #b2dfdb;}
+.badge-gold{background:rgba(255,215,0,.15);color:var(--gold3);border:1px solid rgba(255,215,0,.4);}
+.badge-red{background:var(--redlt);color:var(--red);border:1px solid #ffcdd2;}
+.badge-gray{background:var(--gray2);color:var(--gray5);border:1px solid var(--gray3);}
+
+.divider{height:1px;background:var(--gray3);margin:20px 0;}
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+#toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+  padding:13px 28px;border-radius:100px;
+  font-size:14px;font-weight:600;
+  color:#fff;z-index:9999;
+  opacity:0;transition:all .3s;
+  pointer-events:none;
+  box-shadow:0 4px 20px rgba(0,0,0,.25);
+  white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ═══════════════════════════════════════════════
+   LOADER SPINNER
+═══════════════════════════════════════════════ */
+#loader{
+  position:fixed;inset:0;background:rgba(255,255,255,.92);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:8888;opacity:0;pointer-events:none;transition:opacity .2s;
+}
+#loader.show{opacity:1;pointer-events:all;}
+.spin-ring{
+  width:44px;height:44px;border-radius:50%;
+  border:4px solid var(--bluelt2);
+  border-top-color:var(--blue);
+  animation:spin .8s linear infinite;
+}
+.spin-txt{margin-top:14px;font-size:13px;color:var(--gray4);font-weight:600;}
+
+/* ══════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(10,20,60,.55);
+  display:none;align-items:center;justify-content:center;
+  z-index:7777;padding:20px;
+}
+.modal-overlay.show{display:flex;}
+.modal-box{
+  background:#fff;border-radius:20px;
+  width:100%;max-width:440px;
+  box-shadow:0 20px 60px rgba(13,71,199,.25);
+  overflow:hidden;animation:fadeIn .2s ease;
+}
+.modal-head{
+  background:var(--blue);padding:20px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.modal-head h3{font-size:16px;font-weight:700;color:#fff;}
+.modal-close{
+  background:rgba(255,255,255,.15);border:none;
+  color:#fff;width:30px;height:30px;border-radius:50%;
+  cursor:pointer;font-size:18px;display:flex;
+  align-items:center;justify-content:center;
+  transition:var(--tr);
+}
+.modal-close:hover{background:rgba(255,255,255,.3);}
+.modal-body{padding:24px;}
+
+/* ════════════════════════════════════════════════════════
+   ████  TELA 1 — LANDING PAGE  ████
+════════════════════════════════════════════════════════ */
+#tela-landing .nav-landing{
+  position:fixed;top:0;left:0;right:0;z-index:300;
+  background:rgba(8,18,52,0.55);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(255,255,255,.08);
+  display:flex;align-items:center;padding:0 28px;height:64px;gap:14px;
+  transition:background .3s;
+}
+/* Garante que nenhuma seção/título fique escondido atrás do nav fixo
+   ao usar scrollIntoView ou navegação por âncora */
+#sec-como,#sec-planos,#seduc-card{scroll-margin-top:84px;}
+.land-section-title,.land-section-title h2{scroll-margin-top:84px;}
+#tela-landing{overflow-y:auto;overflow-x:hidden;}
+.nav-landing-logo{
+  font-family:'Playfair Display',serif;
+  font-size:24px;font-weight:900;color:#fff;
+  cursor:pointer;letter-spacing:2px;
+  position:relative;
+  animation:brandGlow 2.6s ease-in-out infinite;
+}
+.nav-landing-logo::before{
+  content:'';position:absolute;left:-18px;top:50%;
+  width:8px;height:8px;border-radius:50%;
+  background:radial-gradient(circle,#FFE8A3,var(--gold) 60%);
+  box-shadow:0 0 16px 4px rgba(255,184,0,.9),0 0 30px 8px rgba(255,184,0,.35);
+  margin-top:-4px;
+  animation:brandOrbit 3.2s linear infinite;
+  z-index:2;
+}
+.nav-landing-logo::after{
+  content:'';position:absolute;left:50%;top:50%;
+  width:140px;height:48px;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(ellipse,rgba(126,179,255,.35),transparent 70%);
+  filter:blur(6px);
+  animation:pulse 2.6s ease-in-out infinite;
+  pointer-events:none;
+  z-index:0;
+}
+.nav-landing-logo span{color:#7EB3FF;position:relative;z-index:1;}
+.nav-landing-sep{flex:1;}
+.nav-landing-link{
+  font-size:12px;font-weight:600;color:rgba(255,255,255,.65);
+  background:none;border:none;cursor:pointer;
+  padding:6px 14px;border-radius:100px;
+  transition:var(--tr);font-family:'Inter',sans-serif;
+}
+.nav-landing-link:hover{color:#fff;background:rgba(255,255,255,.08);}
+.nav-landing-btn{
+  background:linear-gradient(135deg,#3B7FFF,#1A56DB);
+  color:#fff;font-size:13px;font-weight:700;
+  padding:9px 22px;border-radius:100px;border:none;
+  cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif;
+  box-shadow:0 4px 16px rgba(59,127,255,.4);
+}
+.nav-landing-btn:hover{transform:translateY(-1px);box-shadow:0 6px 22px rgba(59,127,255,.55);}
+
+/* ── HERO ── */
+.land-hero{
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:flex-start;
+  text-align:center;
+  padding:128px 24px 80px;
+  position:relative;overflow:hidden;
+  background:var(--ink);
+}
+.hero-content{position:relative;z-index:2;max-width:820px;margin:0 auto;}
+
+/* Pill de destaque SEDUC */
+.hero-destaque-pill{
+  display:inline-flex;align-items:center;gap:10px;
+  background:linear-gradient(135deg,rgba(255,184,0,.15),rgba(255,184,0,.05));
+  border:1px solid rgba(255,184,0,.4);
+  border-radius:100px;padding:8px 20px 8px 8px;
+  margin-bottom:28px;
+  animation:fadeUp .4s ease both;
+  cursor:pointer;transition:var(--tr);
+}
+.hero-destaque-pill:hover{background:linear-gradient(135deg,rgba(255,184,0,.25),rgba(255,184,0,.1));border-color:rgba(255,184,0,.7);}
+.pill-dot{
+  background:linear-gradient(135deg,#FFB800,#FF6B00);
+  color:#000;font-size:9px;font-weight:800;letter-spacing:1px;
+  padding:4px 10px;border-radius:100px;text-transform:uppercase;
+  white-space:nowrap;
+}
+.pill-txt{font-size:12px;font-weight:600;color:rgba(255,220,100,.9);}
+.pill-arrow{font-size:12px;color:rgba(255,184,0,.6);}
+
+/* Título principal */
+.land-title-new{
+  font-family:'Inter',sans-serif;
+  font-size:clamp(42px,8vw,82px);
+  font-weight:900;
+  line-height:.92;
+  letter-spacing:-3px;
+  color:#fff;
+  margin-bottom:10px;
+  animation:fadeUp .45s .06s ease both;
+}
+.land-title-new .t-blue{
+  background:linear-gradient(135deg,#7EB3FF,#3B7FFF);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.land-title-new .t-gold{
+  background:linear-gradient(135deg,#FFD700,#FFB800);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+/* Subtítulo */
+.land-sub-new{
+  font-size:clamp(14px,2vw,19px);
+  color:rgba(180,200,255,.75);
+  max-width:560px;margin:0 auto 36px;
+  line-height:1.7;
+  animation:fadeUp .45s .13s ease both;
+}
+.land-sub-new strong{color:rgba(255,255,255,.95);}
+
+/* Botões */
+.land-ctas-new{
+  display:flex;flex-wrap:wrap;gap:14px;
+  justify-content:center;
+  animation:fadeUp .45s .20s ease both;
+  margin-bottom:28px;
+}
+.cta-main{
+  padding:17px 40px;
+  background:linear-gradient(135deg,#3B7FFF,#1A56DB);
+  color:#fff;font-size:15px;font-weight:800;
+  border:none;border-radius:100px;cursor:pointer;
+  transition:var(--tr);font-family:'Inter',sans-serif;
+  box-shadow:0 8px 32px rgba(59,127,255,.45);
+  position:relative;overflow:hidden;
+}
+.cta-main::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);
+  opacity:0;transition:opacity .2s;
+}
+.cta-main:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(59,127,255,.6);}
+.cta-main:hover::before{opacity:1;}
+.cta-sec{
+  padding:17px 36px;
+  background:rgba(255,255,255,.07);
+  color:rgba(255,255,255,.9);
+  font-size:14px;font-weight:600;
+  border:1.5px solid rgba(255,255,255,.18);
+  border-radius:100px;cursor:pointer;
+  transition:var(--tr);font-family:'Inter',sans-serif;
+}
+.cta-sec:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35);}
+
+/* Trial badge */
+.trial-badge-new{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:100px;padding:9px 22px;
+  font-size:13px;color:rgba(255,255,255,.6);
+  animation:fadeUp .45s .27s ease both;
+}
+.trial-badge-new strong{color:rgba(100,200,120,.9);}
+
+/* ── CARD DESTAQUE SEDUC-PA ── */
+.seduc-destaque{
+  background:linear-gradient(135deg,rgba(8,18,52,.95),rgba(15,30,80,.95));
+  border:1px solid rgba(255,184,0,.25);
+  border-radius:20px;
+  padding:28px 32px;
+  max-width:740px;
+  margin:40px auto 0;
+  position:relative;overflow:hidden;
+  animation:fadeUp .5s .34s ease both;
+  z-index:2;
+}
+.seduc-destaque::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#FFB800,transparent);
+}
+.seduc-destaque::after{
+  content:'';position:absolute;
+  top:-60px;right:-60px;
+  width:200px;height:200px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,184,0,.12),transparent 70%);
+}
+.seduc-header{
+  display:flex;align-items:center;gap:14px;margin-bottom:16px;
+}
+.seduc-icon{
+  width:52px;height:52px;border-radius:14px;
+  background:linear-gradient(135deg,#FFB800,#FF8C00);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;flex-shrink:0;
+  box-shadow:0 4px 16px rgba(255,184,0,.35);
+}
+.seduc-badge-wrap{display:flex;flex-direction:column;gap:4px;}
+.seduc-live{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);
+  border-radius:100px;padding:2px 10px;width:fit-content;
+}
+.seduc-live-dot{width:6px;height:6px;border-radius:50%;background:#34D399;animation:pulse 1.5s infinite;}
+.seduc-live-txt{font-size:10px;font-weight:700;color:#34D399;text-transform:uppercase;letter-spacing:1.5px;}
+.seduc-titulo{font-size:clamp(15px,2.5vw,19px);font-weight:800;color:#fff;line-height:1.2;}
+.seduc-titulo span{color:#FFB800;}
+.seduc-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:18px;}
+.seduc-item{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:12px 14px;
+}
+.seduc-item-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.4);margin-bottom:4px;}
+.seduc-item-val{font-size:13px;font-weight:700;color:rgba(255,255,255,.9);}
+.seduc-item-val.gold{color:#FFB800;}
+.seduc-item-val.green{color:#34D399;}
+.seduc-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.seduc-fgv{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  border-radius:100px;padding:6px 16px;
+}
+.seduc-fgv-dot{width:8px;height:8px;background:#3B7FFF;border-radius:50%;}
+.seduc-fgv-txt{font-size:11px;color:rgba(255,255,255,.65);font-weight:600;}
+.seduc-fgv-txt strong{color:#7EB3FF;}
+.seduc-cta{
+  background:linear-gradient(135deg,#FFB800,#FF8C00);
+  color:#000;font-size:13px;font-weight:800;
+  padding:10px 24px;border-radius:100px;border:none;
+  cursor:pointer;transition:var(--tr);font-family:'Inter',sans-serif;
+}
+.seduc-cta:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(255,184,0,.45);}
+
+/* ── STATS BAR ── */
+.land-stats{
+  display:flex;justify-content:center;
+  background:var(--ink2);
+  border-bottom:1px solid rgba(255,255,255,.06);
+  padding:20px;gap:0;
+}
+.land-stat{flex:1;max-width:220px;text-align:center;padding:12px 16px;}
+.land-stat:not(:last-child){border-right:1px solid rgba(255,255,255,.06);}
+.land-stat-v{
+  font-family:'JetBrains Mono',monospace;
+  font-size:26px;font-weight:700;
+  background:linear-gradient(135deg,#7EB3FF,#3B7FFF);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.land-stat-l{font-size:10px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1.5px;margin-top:4px;}
+
+/* ── COMO FUNCIONA ── */
+.land-section{padding:80px 24px;max-width:1080px;margin:0 auto;}
+.land-section-title{text-align:center;margin-bottom:52px;}
+.land-section-title h2{
+  font-size:clamp(26px,5vw,40px);font-weight:900;
+  color:#fff;margin-bottom:10px;letter-spacing:-1px;
+}
+.land-section-title p{font-size:15px;color:rgba(180,200,255,.65);max-width:480px;margin:0 auto;}
+
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;}
+.step-card{
+  background:rgba(255,255,255,.035);border:1.5px solid rgba(255,255,255,.09);
+  border-radius:20px;padding:28px;text-align:center;
+  transition:var(--tr);position:relative;overflow:hidden;
+}
+.step-card:hover{transform:translateY(-4px);box-shadow:0 16px 44px rgba(0,0,0,.35);border-color:rgba(123,158,255,.4);}
+.step-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,#3B7FFF,#7B2FBE,#FFB800);
+}
+.step-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:700;letter-spacing:3px;
+  color:#7EB3FF;text-transform:uppercase;margin-bottom:12px;
+}
+.step-ico{font-size:40px;display:block;margin-bottom:14px;animation:float 4s ease-in-out infinite;}
+.step-title{font-size:17px;font-weight:800;color:#fff;margin-bottom:8px;}
+.step-desc{font-size:13px;color:rgba(200,210,240,.6);line-height:1.6;}
+
+/* ── CONCURSOS PREVIEW ── */
+.land-concursos-bg{background:var(--ink);padding:72px 24px;position:relative;}
+.concurso-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;max-width:1080px;margin:0 auto;}
+.cc-card{
+  background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.09);
+  border-radius:var(--r16);padding:20px;transition:var(--tr);
+}
+.cc-card:hover{transform:translateY(-3px);box-shadow:0 16px 44px rgba(0,0,0,.35);border-color:#3B7FFF;}
+.cc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+.cc-orgao{font-size:11px;font-weight:700;color:rgba(180,200,255,.55);text-transform:uppercase;letter-spacing:1px;}
+.cc-nome{font-size:15px;font-weight:800;color:#fff;margin:4px 0 8px;}
+.cc-info{display:flex;gap:6px;flex-wrap:wrap;}
+.cc-data{font-size:11px;color:rgba(180,200,255,.55);}
+.cc-empty{grid-column:1/-1;text-align:center;padding:48px;color:rgba(180,200,255,.55);font-size:14px;}
+
+/* Planos */
+.land-planos-bg{background:var(--ink2);padding:72px 24px;}
+.planos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;max-width:900px;margin:0 auto;}
+.plano-card{
+  background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);
+  border-radius:20px;padding:28px;text-align:center;
+  transition:var(--tr);position:relative;
+}
+.plano-card.destaque{
+  background:linear-gradient(135deg,var(--blue) 0%,var(--blue3) 100%);
+  border-color:var(--blue2);transform:scale(1.04);
+  box-shadow:0 16px 50px rgba(26,86,219,.4);
+}
+.plano-card:hover:not(.destaque){transform:translateY(-4px);border-color:var(--blue2);}
+.plano-badge{
+  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  background:var(--gold);color:var(--ink);
+  font-size:10px;font-weight:800;letter-spacing:1.5px;
+  padding:4px 16px;border-radius:100px;text-transform:uppercase;
+  white-space:nowrap;
+}
+.plano-nome{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;}
+.plano-card:not(.destaque) .plano-nome{color:rgba(180,200,255,.6);}
+.plano-card.destaque .plano-nome{color:rgba(255,215,0,.8);}
+.plano-preco{
+  font-family:'Playfair Display',serif;
+  font-size:48px;font-weight:900;line-height:1;margin-bottom:4px;
+}
+.plano-card:not(.destaque) .plano-preco{color:#fff;}
+.plano-card.destaque .plano-preco{color:#fff;}
+.plano-period{font-size:13px;margin-bottom:8px;}
+.plano-card:not(.destaque) .plano-period{color:rgba(180,200,255,.55);}
+.plano-card.destaque .plano-period{color:rgba(255,255,255,.7);}
+.plano-total{
+  font-size:12px;font-weight:600;padding:4px 12px;
+  border-radius:100px;display:inline-block;margin-bottom:20px;
+}
+.plano-card:not(.destaque) .plano-total{background:rgba(59,127,255,.15);color:#7EB3FF;}
+.plano-card.destaque .plano-total{background:rgba(255,255,255,.2);color:#fff;}
+.plano-economia{
+  font-size:11px;font-weight:700;margin-bottom:20px;
+}
+.plano-card:not(.destaque) .plano-economia{color:var(--green2);}
+.plano-card.destaque .plano-economia{color:var(--gold);}
+.plano-cta{
+  width:100%;padding:12px;border:none;border-radius:var(--r12);
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:var(--tr);
+}
+.plano-card:not(.destaque) .plano-cta{background:var(--blue);color:#fff;}
+.plano-card:not(.destaque) .plano-cta:hover{background:var(--blue2);}
+.plano-card.destaque .plano-cta{background:var(--gold);color:var(--ink);}
+.plano-card.destaque .plano-cta:hover{background:#fff;}
+
+/* PIX info */
+.pix-info{
+  max-width:640px;margin:32px auto 0;
+  background:rgba(52,211,153,.08);border:1.5px solid rgba(52,211,153,.25);
+  border-radius:var(--r16);padding:20px 24px;
+  display:flex;gap:14px;align-items:flex-start;
+}
+.pix-ico{font-size:28px;flex-shrink:0;}
+.pix-txt h4{font-size:14px;font-weight:700;color:var(--green2);margin-bottom:4px;}
+.pix-txt p{font-size:13px;color:rgba(200,210,240,.65);line-height:1.6;}
+
+/* Footer */
+.land-footer{
+  background:var(--dark);padding:40px 24px;text-align:center;
+}
+.land-footer-logo{
+  font-family:'Playfair Display',serif;
+  font-size:28px;font-weight:900;color:var(--gold);
+  margin-bottom:8px;
+}
+.land-footer p{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:16px;}
+.land-footer-links{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;}
+.land-footer-links a{font-size:12px;color:rgba(255,255,255,.5);text-decoration:none;transition:var(--tr);}
+.land-footer-links a:hover{color:var(--gold);}
+
+/* ════════════════════════════════════════════════════════
+   ████  TELA 2 — CADASTRO  ████
+════════════════════════════════════════════════════════ */
+#tela-cadastro{background:var(--gray1);}
+.auth-body{
+  max-width:480px;margin:0 auto;
+  padding:40px 20px 60px;
+  flex:1;
+}
+.auth-card{
+  background:var(--white);border:1px solid var(--gray3);
+  border-radius:20px;overflow:hidden;
+  box-shadow:0 20px 60px rgba(11,21,48,.10),0 2px 8px rgba(11,21,48,.06);
+}
+.auth-head{
+  background:linear-gradient(135deg,var(--ink2),var(--blue) 130%);
+  padding:32px 28px 26px;text-align:center;position:relative;overflow:hidden;
+}
+.auth-head::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.auth-head::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 80% at 80% -10%,rgba(126,179,255,.25),transparent 60%);
+}
+.auth-head-ico{font-size:40px;display:block;margin-bottom:10px;position:relative;z-index:1;}
+.auth-head h2{
+  font-family:'Playfair Display',serif;
+  font-size:26px;font-weight:900;color:#fff;margin-bottom:4px;
+  position:relative;z-index:1;
+}
+.auth-head p{font-size:13px;color:rgba(255,255,255,.7);position:relative;z-index:1;}
+.auth-form{padding:28px;}
+
+.level-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.level-btn{
+  background:var(--gray1);border:1.5px solid var(--gray3);
+  border-radius:var(--r12);padding:14px 10px;
+  text-align:center;cursor:pointer;transition:var(--tr);
+}
+.level-btn:hover{border-color:var(--blue);background:var(--bluelt);}
+.level-btn.sel{background:var(--bluelt);border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,86,219,.12);}
+.level-btn-ico{font-size:22px;display:block;margin-bottom:6px;}
+.level-btn-txt{font-size:12px;font-weight:700;color:var(--dark);}
+
+.auth-foot{
+  padding:16px 28px;background:var(--gray1);border-top:1px solid var(--gray3);
+  text-align:center;font-size:13px;color:var(--gray4);
+}
+.auth-foot a{color:var(--blue);font-weight:600;cursor:pointer;text-decoration:none;}
+.auth-foot a:hover{text-decoration:underline;}
+
+.trial-info{
+  background:rgba(255,184,0,.08);border:1.5px solid rgba(255,184,0,.3);
+  border-radius:var(--r12);padding:12px 16px;
+  font-size:12px;color:var(--dark);line-height:1.6;
+  display:flex;gap:10px;align-items:flex-start;margin-bottom:14px;
+}
+.trial-info span{font-size:18px;flex-shrink:0;}
+
+/* ════════════════════════════════════════════════════════
+   ████  TELA 3 — LOGIN  ████
+════════════════════════════════════════════════════════ */
+#tela-login{background:var(--ink);position:relative;}
+#tela-login .auth-body{position:relative;z-index:2;}
+#tela-login .auth-card{
+  background:rgba(10,23,64,.55);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 24px 70px rgba(0,0,0,.45);
+}
+#tela-login .frm-l{color:rgba(220,230,255,.75);}
+#tela-login .frm-i{
+  background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:#fff;
+}
+#tela-login .frm-i::placeholder{color:rgba(220,230,255,.35);}
+#tela-login .frm-i:focus{border-color:var(--cyan);background:rgba(255,255,255,.09);box-shadow:0 0 0 3px rgba(34,211,238,.15);}
+#tela-login .auth-foot{
+  background:rgba(255,255,255,.03);border-top-color:rgba(255,255,255,.1);
+  color:rgba(220,230,255,.6);
+}
+#tela-login .auth-foot a{color:var(--cyan2);}
+
+/* ════════════════════════════════════════════════════════
+   ████  TELA 4 — PAINEL DO CANDIDATO  ████
+════════════════════════════════════════════════════════ */
+#tela-painel{background:var(--gray1);}
+.painel-hero{
+  background:linear-gradient(135deg,var(--ink2),var(--blue) 140%);
+  padding:24px 20px 20px;text-align:center;
+  position:relative;overflow:hidden;flex-shrink:0;
+}
+.painel-hero::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.painel-hero-top{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.painel-ola{
+  font-size:12px;color:rgba(255,255,255,.65);
+  text-transform:uppercase;letter-spacing:2px;
+  position:relative;z-index:1;margin-bottom:2px;
+}
+.painel-nome{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(22px,4vw,34px);font-weight:900;
+  color:#fff;position:relative;z-index:1;
+  margin-bottom:10px;
+}
+.painel-status-bar{
+  display:inline-flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+  border-radius:100px;padding:8px 18px;
+  position:relative;z-index:1;
+  font-size:12px;color:rgba(255,255,255,.85);
+}
+.painel-status-bar .dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--gold);animation:pulse 2s infinite;
+}
+.painel-status-bar.ativo .dot{background:var(--green2);}
+.painel-status-bar.expirado .dot{background:var(--red);}
+
+.painel-body{
+  max-width:1080px;margin:0 auto;
+  padding:20px 20px 40px;flex:1;
+}
+
+/* Timer */
+.timer-box{
+  background:var(--white);border:2px solid var(--gold2);
+  border-radius:var(--r16);padding:16px 20px;
+  display:flex;align-items:center;gap:14px;
+  margin-bottom:20px;
+}
+.timer-box.expirado{border-color:var(--red);background:var(--redlt);}
+.timer-ico{font-size:28px;flex-shrink:0;}
+.timer-info{flex:1;}
+.timer-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray4);margin-bottom:2px;}
+.timer-val{
+  font-family:'JetBrains Mono',monospace;
+  font-size:22px;font-weight:700;color:var(--gold3);
+}
+.timer-val.expirado{color:var(--red);}
+.timer-cta{flex-shrink:0;}
+
+/* Stats do painel */
+.painel-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;}
+.pstat{
+  background:var(--white);border:1.5px solid var(--gray3);
+  border-radius:var(--r12);padding:16px;text-align:center;
+}
+.pstat-v{
+  font-family:'Playfair Display',serif;
+  font-size:28px;font-weight:900;color:var(--blue);
+}
+.pstat-l{font-size:10px;color:var(--gray4);text-transform:uppercase;letter-spacing:1.2px;margin-top:3px;}
+
+/* ── Abas de modalidade de simulado (painel) ── */
+.sim-tabs{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;
+  margin:10px 0 4px;
+}
+.sim-tab{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:12px 8px;border-radius:var(--r12);
+  background:var(--white);border:1.5px solid var(--gray3);
+  cursor:pointer;transition:var(--tr);
+  font-family:'Inter',sans-serif;
+}
+.sim-tab:hover{border-color:var(--blue);}
+.sim-tab.ativa{
+  background:var(--bluelt);border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(26,86,219,.10);
+}
+.sim-tab-ico{font-size:20px;line-height:1;}
+.sim-tab-txt{font-size:12.5px;font-weight:700;color:var(--gray5);text-align:center;line-height:1.25;}
+.sim-tab.ativa .sim-tab-txt{color:var(--blue);}
+.sim-panel{display:none;}
+.sim-panel.ativo{display:block;animation:fadeIn .2s ease;}
+.sim-panel-desc{font-size:12.5px;color:var(--gray4);margin:6px 2px 4px;line-height:1.5;}
+
+/* Grade de bancas (provas anteriores) */
+.banca-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:10px;}
+.banca-card{
+  background:var(--white);border:1.5px solid var(--gray3);
+  border-radius:var(--r16);padding:20px 14px;text-align:center;
+  cursor:pointer;transition:var(--tr);
+}
+.banca-card:hover{transform:translateY(-3px);box-shadow:var(--sh2);border-color:var(--blue);}
+.banca-card-ico{font-size:28px;margin-bottom:8px;}
+.banca-card-nome{font-size:13px;font-weight:800;color:var(--dark);}
+.banca-card-qtd{font-size:11px;color:var(--gray4);margin-top:2px;}
+
+@media(max-width:480px){
+  .sim-tab{padding:10px 6px;}
+  .sim-tab-txt{font-size:11.5px;}
+  .sim-tab-ico{font-size:18px;}
+}
+
+/* Concursos painel */
+.painel-concursos{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:12px;}
+.pc-card{
+  background:var(--white);border:1.5px solid var(--gray3);
+  border-radius:var(--r16);padding:18px;
+  transition:var(--tr);cursor:pointer;
+}
+.pc-card:hover{transform:translateY(-3px);box-shadow:var(--sh2);border-color:var(--blue);}
+.pc-card.bloqueado{opacity:.6;cursor:not-allowed;}
+.pc-card.bloqueado:hover{transform:none;box-shadow:none;border-color:var(--gray3);}
+.pc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.pc-orgao{font-size:10px;font-weight:700;color:var(--gray4);text-transform:uppercase;letter-spacing:1px;}
+.pc-nome{font-size:15px;font-weight:800;color:var(--dark);margin-bottom:8px;}
+.pc-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.pc-footer{display:flex;align-items:center;justify-content:space-between;}
+.pc-data{font-size:11px;color:var(--gray4);}
+.pc-btn{
+  background:var(--blue);color:#fff;
+  font-size:11px;font-weight:700;
+  padding:6px 14px;border-radius:100px;
+  border:none;cursor:pointer;transition:var(--tr);
+  font-family:'Inter',sans-serif;
+}
+.pc-btn:hover{background:var(--gold);color:var(--blue);}
+.pc-lock{font-size:13px;color:var(--gray4);}
+
+/* ════════════════════════════════════════════════════════
+   ████  TELA 5 — PLANOS / PAGAMENTO PIX  ████
+════════════════════════════════════════════════════════ */
+#tela-planos{background:var(--gray1);}
+.planos-body{max-width:860px;margin:0 auto;padding:32px 20px 60px;flex:1;}
+.planos-hero{
+  background:linear-gradient(135deg,var(--blue),var(--blue3));
+  border-radius:20px;padding:32px;text-align:center;
+  margin-bottom:28px;position:relative;overflow:hidden;
+}
+.planos-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.planos-hero h2{
+  font-family:'Playfair Display',serif;
+  font-size:28px;font-weight:900;color:#fff;margin-bottom:6px;
+}
+.planos-hero p{font-size:14px;color:rgba(255,255,255,.75);}
+
+.planos-grid-pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:28px;}
+.plano-pg-card{
+  background:var(--white);border:2px solid var(--gray3);
+  border-radius:var(--r16);padding:24px;text-align:center;
+  cursor:pointer;transition:var(--tr);position:relative;
+}
+.plano-pg-card:hover{border-color:var(--blue);transform:translateY(-3px);box-shadow:var(--sh2);}
+.plano-pg-card.sel{border-color:var(--blue);background:var(--bluelt);box-shadow:0 0 0 4px rgba(13,71,199,.1);}
+.plano-pg-badge{
+  position:absolute;top:-10px;left:50%;transform:translateX(-50%);
+  background:var(--gold);color:var(--blue);
+  font-size:9px;font-weight:800;letter-spacing:1.5px;
+  padding:3px 12px;border-radius:100px;text-transform:uppercase;
+  white-space:nowrap;
+}
+.plano-pg-nome{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--gray4);margin-bottom:10px;}
+.plano-pg-preco{
+  font-family:'Playfair Display',serif;
+  font-size:40px;font-weight:900;color:var(--dark);margin-bottom:2px;
+}
+.plano-pg-mes{font-size:12px;color:var(--gray4);margin-bottom:6px;}
+.plano-pg-total{
+  font-size:12px;font-weight:700;color:var(--blue);
+  background:var(--bluelt);padding:3px 12px;border-radius:100px;
+  display:inline-block;margin-bottom:6px;
+}
+.plano-pg-eco{font-size:11px;color:var(--green);font-weight:600;}
+
+/* PIX Payment Box */
+.pix-box{
+  background:var(--white);border:1.5px solid var(--gray3);
+  border-radius:var(--r16);padding:28px;
+  display:none;
+}
+.pix-box.show{display:block;}
+.pix-box-title{
+  font-size:16px;font-weight:800;color:var(--dark);
+  margin-bottom:4px;display:flex;align-items:center;gap:8px;
+}
+.pix-box-sub{font-size:13px;color:var(--gray4);margin-bottom:20px;}
+.pix-steps{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+.pix-step{
+  display:flex;align-items:flex-start;gap:14px;
+  background:var(--gray1);border-radius:var(--r12);padding:14px;
+}
+.pix-step-n{
+  min-width:28px;height:28px;border-radius:50%;
+  background:var(--blue);color:#fff;
+  font-size:12px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.pix-step-txt h4{font-size:13px;font-weight:700;color:var(--dark);margin-bottom:2px;}
+.pix-step-txt p{font-size:12px;color:var(--gray4);line-height:1.5;}
+.pix-chave{
+  background:var(--bluelt);border:2px dashed var(--blue);
+  border-radius:var(--r12);padding:16px;
+  text-align:center;margin:12px 0;
+}
+.pix-chave-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--gray4);margin-bottom:6px;}
+.pix-chave-val{
+  font-family:'JetBrains Mono',monospace;
+  font-size:18px;font-weight:700;color:var(--blue);
+  word-break:break-all;
+}
+.pix-chave-tipo{font-size:11px;color:var(--gray4);margin-top:4px;}
+.pix-btn-copy{
+  background:var(--blue);color:#fff;border:none;
+  padding:8px 20px;border-radius:100px;
+  font-size:12px;font-weight:700;cursor:pointer;
+  transition:var(--tr);font-family:'Inter',sans-serif;
+  margin-top:8px;
+}
+.pix-btn-copy:hover{background:var(--gold);color:var(--blue);}
+.pix-valor-destaque{
+  background:linear-gradient(135deg,var(--blue),var(--blue3));
+  border-radius:var(--r12);padding:16px;text-align:center;margin:12px 0;
+}
+.pix-valor-destaque .vlabel{font-size:11px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;}
+.pix-valor-destaque .vval{
+  font-family:'Playfair Display',serif;
+  font-size:36px;font-weight:900;color:var(--gold);
+}
+.pix-aviso{
+  background:rgba(255,215,0,.1);border:1.5px solid rgba(255,215,0,.35);
+  border-radius:var(--r12);padding:14px 16px;
+  font-size:12px;color:var(--dark);line-height:1.7;
+  display:flex;gap:10px;margin-top:16px;
+}
+.pix-aviso span{font-size:20px;flex-shrink:0;}
+
+/* ════════════════════════════════════════════════════════
+   ████  TELA 6 — ADMIN  ████
+════════════════════════════════════════════════════════ */
+#tela-admin{background:var(--gray1);}
+.admin-body{max-width:1100px;margin:0 auto;padding:24px 20px 60px;flex:1;}
+.admin-tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
+.admin-tab{
+  padding:10px 20px;background:var(--white);border:1.5px solid var(--gray3);
+  border-radius:100px;font-size:13px;font-weight:600;
+  cursor:pointer;transition:var(--tr);color:var(--gray5);
+}
+.admin-tab:hover{border-color:var(--blue);color:var(--blue);}
+.admin-tab.ativa{background:var(--blue);border-color:var(--blue);color:#fff;}
+.admin-panel{display:none;}
+.admin-panel.ativo{display:block;}
+
+/* Resumo de pagamentos */
+.pag-resumo-card{
+  background:var(--bluelt);border:1.5px solid var(--bluelt2);
+  border-radius:var(--r12);padding:14px 20px;min-width:160px;
+  display:flex;flex-direction:column;gap:2px;
+}
+.pag-resumo-card strong{font-size:24px;font-weight:900;color:var(--blue);font-family:'Playfair Display',serif;}
+.pag-resumo-card span{font-size:12px;color:var(--gray5);}
+.pag-resumo-card.ok{background:var(--greenlt);border-color:#b7ebc6;}
+.pag-resumo-card.ok strong{color:var(--green);}
+
+/* Tabela admin */
+/* Multi-select de áreas do concurso (admin) */
+.nc-areas-wrap{border:1.5px solid var(--gray3);border-radius:var(--r12);padding:10px;background:var(--gray1);}
+.nc-areas-wrap .frm-i{margin-bottom:8px;}
+.nc-areas-lista{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;}
+.nc-areas-lista.vazio{display:none;}
+.nc-area-opt{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:var(--r8);
+  cursor:pointer;font-size:13px;color:var(--dark);transition:var(--tr);
+}
+.nc-area-opt:hover{background:var(--bluelt);}
+.nc-area-opt input{accent-color:var(--blue);cursor:pointer;}
+.nc-area-opt.marcada{background:var(--bluelt);font-weight:600;}
+.nc-areas-sel{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.nc-areas-sel:empty{margin-top:0;}
+.nc-area-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  background:var(--blue);color:#fff;font-size:12px;font-weight:600;
+  padding:5px 6px 5px 12px;border-radius:100px;
+}
+.nc-area-chip button{
+  background:rgba(255,255,255,.25);border:none;color:#fff;
+  width:18px;height:18px;border-radius:50%;cursor:pointer;
+  font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;
+}
+.nc-area-chip button:hover{background:rgba(255,255,255,.4);}
+
+.admin-table-wrap{overflow-x:auto;border-radius:var(--r12);border:1.5px solid var(--gray3);}
+.admin-table{width:100%;border-collapse:collapse;background:var(--white);}
+.admin-table th{
+  background:var(--blue);color:#fff;
+  font-size:11px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;padding:12px 14px;
+  text-align:left;white-space:nowrap;
+}
+.admin-table td{
+  padding:12px 14px;font-size:13px;
+  border-bottom:1px solid var(--gray3);vertical-align:middle;
+}
+.admin-table tr:last-child td{border-bottom:none;}
+.admin-table tr:hover td{background:var(--gray1);}
+.admin-table .nome-td{font-weight:600;color:var(--dark);}
+
+/* Form admin concurso */
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:600px){.form-2col{grid-template-columns:1fr;}}
+.form-3col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+@media(max-width:700px){.form-3col{grid-template-columns:1fr 1fr;}}
+@media(max-width:460px){.form-3col{grid-template-columns:1fr;}}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVIDADE GERAL
+═══════════════════════════════════════════════ */
+@media(max-width:600px){
+  .land-stats{gap:0;flex-wrap:nowrap;}
+  .land-stat{padding:0 8px;}
+  .land-stat-v{font-size:20px;}
+  .planos-grid{grid-template-columns:1fr;}
+  .plano-card.destaque{transform:none;}
+  .level-grid{grid-template-columns:1fr 1fr;}
+  .painel-stats{grid-template-columns:1fr 1fr;}
+  /* Nav da landing: esconde links de âncora (texto longo), mantém
+     "Entrar" e o CTA, evitando que o nav quebre em 2 linhas e
+     cubra o título do hero */
+  .nav-landing{padding:0 16px;gap:8px;}
+  .nav-link-scroll{display:none;}
+  .nav-landing-link{font-size:12px;padding:6px 10px;}
+  .nav-landing-btn{font-size:12px;padding:8px 16px;white-space:nowrap;}
+  .land-hero{padding-top:104px;}
+}
+@media(max-width:380px){
+  .nav-landing-btn{font-size:11px;padding:7px 12px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ════ LOADER ════ -->
+<div id="loader"><div class="spin-ring"></div><p class="spin-txt">Carregando...</p></div>
+
+<!-- ════ TOAST ════ -->
+<div id="toast"></div>
+
+<!-- ════════════════════════════════════════════════════════════
+     TELA 1 — LANDING PAGE
+════════════════════════════════════════════════════════════ -->
+<div id="tela-landing" class="tela ativa">
+
+  <!-- NAV GLASSMORPHISM -->
+  <nav class="nav-landing">
+    <span class="nav-landing-logo" onclick="ir('tela-landing')">VE<span>RUS</span></span>
+    <div class="nav-landing-sep"></div>
+    <button class="nav-landing-link nav-link-scroll" onclick="document.getElementById('sec-como').scrollIntoView({behavior:'smooth'})">Como funciona</button>
+    <button class="nav-landing-link nav-link-scroll" onclick="document.getElementById('sec-planos').scrollIntoView({behavior:'smooth'})">Planos</button>
+    <button class="nav-landing-link" onclick="ir('tela-login')">Entrar</button>
+    <button class="nav-landing-btn" onclick="ir('tela-cadastro')">Começar grátis →</button>
+  </nav>
+
+  <!-- HERO -->
+  <section class="land-hero">
+    <div class="hex-bg" id="heroHexBg">
+      <div class="hex-grid"></div>
+      <div class="hex-layer l1"></div>
+      <div class="hex-layer l2"></div>
+      <svg class="hex-trend" viewBox="0 0 1440 900" preserveAspectRatio="none">
+        <polyline points="40,620 220,560 420,640 600,480 780,520 960,340 1140,380 1320,180"
+          fill="none" stroke="#22D3EE" stroke-width="2" stroke-opacity="0.4"/>
+        <polygon points="1320,180 1300,200 1330,210" fill="#22D3EE" opacity="0.55"/>
+      </svg>
+      <div class="hex-dots"></div>
+      <div class="hex-glow" id="heroHexGlow"></div>
+      <div class="hex-fade"></div>
+    </div>
+
+    <div class="hero-content">
+      <!-- Pill SEDUC destaque -->
+      <div class="hero-destaque-pill" onclick="document.getElementById('seduc-card').scrollIntoView({behavior:'smooth'})">
+        <span class="pill-dot">🔥 Destaque</span>
+        <span class="pill-txt">SEDUC-PA 2026 — Banca FGV confirmada</span>
+        <span class="pill-arrow">↓</span>
+      </div>
+
+      <!-- Título -->
+      <h1 class="land-title-new">
+        Sua aprovação<br>
+        <span class="t-blue">começa</span> <span class="t-gold">aqui.</span>
+      </h1>
+
+      <!-- Subtítulo -->
+      <p class="land-sub-new">
+        Simulados <strong>personalizados</strong> para concursos públicos do Pará e Maranhão.<br>
+        Estude pelo seu nível, na sua área. Sem enrolação.
+      </p>
+
+      <!-- CTAs -->
+      <div class="land-ctas-new">
+        <button class="cta-main" onclick="ir('tela-cadastro')">🚀 Começar agora — 48h grátis</button>
+        <button class="cta-sec" onclick="ir('tela-login')">Já tenho conta</button>
+      </div>
+
+      <!-- Trial badge -->
+      <div class="trial-badge-new">
+        <strong>✓ 48 horas grátis</strong> &nbsp;·&nbsp; Sem cartão de crédito &nbsp;·&nbsp; Cancele quando quiser
+      </div>
+
+      <!-- Card SEDUC-PA destaque -->
+      <div class="seduc-destaque" id="seduc-card">
+        <div class="seduc-header">
+          <div class="seduc-icon">🏛️</div>
+          <div class="seduc-badge-wrap">
+            <div class="seduc-live">
+              <div class="seduc-live-dot"></div>
+              <span class="seduc-live-txt">Concurso em destaque</span>
+            </div>
+            <div class="seduc-titulo">Concurso SEDUC-PA 2026 — <span>Secretaria de Educação do Pará</span></div>
+          </div>
+        </div>
+        <div class="seduc-body">
+          <div class="seduc-item">
+            <div class="seduc-item-label">Banca organizadora</div>
+            <div class="seduc-item-val gold">FGV — Fund. Getulio Vargas</div>
+          </div>
+          <div class="seduc-item">
+            <div class="seduc-item-label">Vagas previstas</div>
+            <div class="seduc-item-val green">Milhares de vagas</div>
+          </div>
+          <div class="seduc-item">
+            <div class="seduc-item-label">Nível</div>
+            <div class="seduc-item-val">Superior — Educação</div>
+          </div>
+          <div class="seduc-item">
+            <div class="seduc-item-label">Estado</div>
+            <div class="seduc-item-val">Pará — PA</div>
+          </div>
+        </div>
+        <div class="seduc-footer">
+          <div class="seduc-fgv">
+            <div class="seduc-fgv-dot"></div>
+            <span class="seduc-fgv-txt">Simulados com foco no padrão <strong>FGV</strong> disponíveis na plataforma</span>
+          </div>
+          <button class="seduc-cta" onclick="ir('tela-cadastro')">Estudar para a SEDUC →</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS BAR -->
+  <div class="land-stats">
+    <div class="land-stat">
+      <div class="land-stat-v" id="stat-concursos">—</div>
+      <div class="land-stat-l">Concursos Ativos</div>
+    </div>
+    <div class="land-stat">
+      <div class="land-stat-v" id="stat-usuarios">—</div>
+      <div class="land-stat-l">Candidatos Cadastrados</div>
+    </div>
+    <div class="land-stat">
+      <div class="land-stat-v" id="stat-simulados">—</div>
+      <div class="land-stat-l">Simulados Realizados</div>
+    </div>
+    <div class="land-stat">
+      <div class="land-stat-v">2</div>
+      <div class="land-stat-l">Estados Cobertos</div>
+    </div>
+  </div>
+
+  <!-- COMO FUNCIONA -->
+  <div style="background:var(--ink2);" id="sec-como">
+    <div class="land-section">
+      <div class="land-section-title">
+        <div class="eyebrow" style="display:inline-flex;">Como funciona</div>
+        <h2>Simples. Rápido. Eficaz.</h2>
+        <p>Em três passos você começa a estudar com foco total no seu concurso.</p>
+      </div>
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-num">Passo 01</div>
+          <span class="step-ico">📝</span>
+          <div class="step-title">Cadastre-se</div>
+          <p class="step-desc">Crie sua conta informando nome, e-mail, senha e o seu nível de escolaridade. Em segundos você tem acesso.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">Passo 02</div>
+          <span class="step-ico">🎯</span>
+          <div class="step-title">Escolha seu perfil</div>
+          <p class="step-desc">Informe sua área de formação. A plataforma filtra automaticamente os conteúdos e concursos certos para você.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">Passo 03</div>
+          <span class="step-ico">🚀</span>
+          <div class="step-title">Estude com foco</div>
+          <p class="step-desc">Acesse simulados dos concursos ativos, questões da sua área e acompanhe sua evolução. Aprovação mais perto.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONCURSOS ATIVOS -->
+  <div class="land-concursos-bg">
+    <div style="max-width:1080px;margin:0 auto;">
+      <div class="land-section-title" style="margin-bottom:28px;">
+        <div class="eyebrow" style="display:inline-flex;">Concursos</div>
+        <h2>Concursos Públicos Ativos</h2>
+        <p>Editais abertos no Pará e Maranhão. Cadastre-se para acessar os simulados de cada concurso.</p>
+      </div>
+      <div class="concurso-cards" id="land-concursos">
+        <div class="cc-empty">⏳ Carregando concursos...</div>
+      </div>
+      <div style="text-align:center;margin-top:28px;">
+        <button class="btn btn-primary" style="max-width:300px;" onclick="ir('tela-cadastro')">Ver todos os concursos →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TESTE GRÁTIS CTA -->
+  <div style="background:var(--ink);padding:80px 24px;text-align:center;position:relative;overflow:hidden;">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 60% at 50% 50%,rgba(59,127,255,.12),transparent);pointer-events:none;"></div>
+    <div style="position:relative;z-index:1;max-width:640px;margin:0 auto;">
+      <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);border-radius:100px;padding:5px 16px;margin-bottom:20px;">
+        <span style="width:7px;height:7px;border-radius:50%;background:#34D399;display:inline-block;animation:pulse 1.5s infinite;"></span>
+        <span style="font-size:11px;font-weight:700;color:#34D399;text-transform:uppercase;letter-spacing:2px;">100% Gratuito — Sem cadastro</span>
+      </div>
+      <h2 style="font-size:clamp(28px,5vw,42px);font-weight:900;color:#fff;margin-bottom:12px;letter-spacing:-1px;">Faça um simulado grátis<br><span style="background:linear-gradient(135deg,#7EB3FF,#3B7FFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">agora mesmo</span></h2>
+      <p style="font-size:15px;color:rgba(180,200,255,.7);margin-bottom:28px;line-height:1.7;">10 questões no padrão das maiores bancas do Brasil — FGV, CESPE, VUNESP. Escolha seu nível, faça o teste, veja seu resultado com correção detalhada.</p>
+      <button onclick="ir('tela-teste')" style="padding:18px 44px;background:linear-gradient(135deg,#34D399,#059669);color:#fff;font-size:16px;font-weight:800;border:none;border-radius:100px;cursor:pointer;font-family:'Inter',sans-serif;box-shadow:0 8px 28px rgba(52,211,153,.35);transition:all .2s;">
+        🎯 Iniciar simulado grátis →
+      </button>
+      <div style="margin-top:14px;font-size:12px;color:rgba(255,255,255,.3);">Sem login · Sem cadastro · Resultado imediato</div>
+    </div>
+  </div>
+
+  <!-- PLANOS -->
+  <div class="land-planos-bg" id="sec-planos">
+    <div style="max-width:1080px;margin:0 auto;">
+      <div class="land-section-title" style="margin-bottom:40px;">
+        <div class="eyebrow" style="display:inline-flex;">Planos</div>
+        <h2>Invista na sua aprovação</h2>
+        <p>Faça o teste grátis, veja o valor da plataforma e então escolha seu plano.</p>
+      </div>
+      <div class="planos-grid">
+        <div class="plano-card">
+          <div class="plano-nome">Mensal</div>
+          <div class="plano-preco">R$49<small style="font-size:24px;">,90</small></div>
+          <div class="plano-period">por mês</div>
+          <div class="plano-total">Total: R$ 49,90</div>
+          <div class="plano-economia">&nbsp;</div>
+          <button class="plano-cta" onclick="ir('tela-cadastro')">Assinar agora</button>
+        </div>
+        <div class="plano-card">
+          <div class="plano-nome">Trimestral</div>
+          <div class="plano-preco">R$109<small style="font-size:24px;">,90</small></div>
+          <div class="plano-period">3 meses</div>
+          <div class="plano-total">R$ 36,63/mês</div>
+          <div class="plano-economia">💰 Economia de R$ 39,80</div>
+          <button class="plano-cta" onclick="ir('tela-cadastro')">Assinar agora</button>
+        </div>
+        <div class="plano-card destaque">
+          <div class="plano-badge">✨ Mais vantajoso</div>
+          <div class="plano-nome">Semestral</div>
+          <div class="plano-preco">R$199<small style="font-size:24px;">,00</small></div>
+          <div class="plano-period">6 meses</div>
+          <div class="plano-total">R$ 33,17/mês</div>
+          <div class="plano-economia">💰 Economia de R$ 100,40</div>
+          <button class="plano-cta" onclick="ir('tela-cadastro')">Assinar agora</button>
+        </div>
+        <div class="plano-card">
+          <div class="plano-badge" style="background:linear-gradient(135deg,#7EB3FF,#3B7FFF);color:#fff;">⭐ Anual</div>
+          <div class="plano-nome">Anual</div>
+          <div class="plano-preco">R$296<small style="font-size:24px;">,00</small></div>
+          <div class="plano-period">12 meses</div>
+          <div class="plano-total">R$ 24,67/mês</div>
+          <div class="plano-economia">💰 Economia de R$ 302,80</div>
+          <button class="plano-cta" onclick="ir('tela-cadastro')">Assinar agora</button>
+        </div>
+      </div>
+      <div class="pix-info" style="max-width:860px;">
+        <div class="pix-ico">💚</div>
+        <div class="pix-txt">
+          <h4>Pagamento somente via PIX — Mercado Pago</h4>
+          <p>Após o pagamento, o seu acesso é <strong>liberado em até 10 minutos</strong>. Simples, seguro e sem burocracia. Sem cobrança automática — você escolhe quando renovar.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="land-footer">
+    <div class="land-footer-logo">VERUS</div>
+    <p>Plataforma de preparação para concursos públicos do Pará e Maranhão.</p>
+    <div class="land-footer-links">
+      <a href="#" onclick="return false;">Termos de Uso</a>
+      <a href="#" onclick="abrirPolitica();return false;">Política de Privacidade</a>
+      <a href="https://wa.me/5591993222961" target="_blank" rel="noopener">Contato (WhatsApp)</a>
+      <a href="#" onclick="ir('tela-cadastro');return false;">Cadastre-se</a>
+    </div>
+    <p style="margin-top:16px;">© 2026 VERUS — Todos os direitos reservados</p>
+  </footer>
+
+  <a href="https://wa.me/5591993222961" target="_blank" rel="noopener" id="whats-float"
+     style="position:fixed;right:18px;bottom:18px;z-index:500;width:54px;height:54px;border-radius:50%;
+            background:#25D366;display:flex;align-items:center;justify-content:center;
+            box-shadow:0 4px 18px rgba(0,0,0,.25);text-decoration:none;font-size:28px;"
+     title="Fale conosco no WhatsApp">💬</a>
+
+</div><!-- /tela-landing -->
+
+
+<!-- ════════════════════════════════════════════════════════════
+     TELA TESTE GRÁTIS
+════════════════════════════════════════════════════════════ -->
+<div id="tela-teste" class="tela">
+<nav class="nav">
+  <span class="nav-logo" onclick="ir('tela-landing')">VERUS</span>
+  <div class="nav-sep"></div>
+  <span style="font-size:12px;color:rgba(255,255,255,.6);font-weight:600;">Simulado Gratuito</span>
+  <div class="nav-sep"></div>
+  <button class="nav-btn" onclick="ir('tela-landing')">← Voltar</button>
+</nav>
+
+<style>
+/* ── TESTE GRÁTIS ── */
+.teste-body{max-width:680px;margin:0 auto;padding:28px 20px 60px;flex:1;}
+.teste-step{display:none;animation:fadeIn .2s ease;}
+.teste-step.ativo{display:block;}
+
+/* Step 1 — escolha de perfil */
+.perfil-card{
+  background:#fff;border:1.5px solid var(--gray3);
+  border-radius:20px;overflow:hidden;box-shadow:var(--sh);
+}
+.perfil-head{
+  background:linear-gradient(135deg,var(--ink),var(--blue));
+  padding:28px;text-align:center;position:relative;
+}
+.perfil-head::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#FFB800,transparent);}
+.perfil-head h2{font-size:22px;font-weight:900;color:#fff;margin-bottom:4px;}
+.perfil-head p{font-size:13px;color:rgba(255,255,255,.65);}
+.perfil-form{padding:24px;}
+.nivel-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.nivel-card{
+  background:var(--gray1);border:2px solid var(--gray3);
+  border-radius:14px;padding:18px 12px;
+  text-align:center;cursor:pointer;transition:var(--tr);
+}
+.nivel-card:hover{border-color:var(--blue);background:var(--bluelt);}
+.nivel-card.sel{border-color:var(--blue);background:var(--bluelt);box-shadow:0 0 0 3px rgba(13,71,199,.12);}
+.nivel-card-ico{font-size:28px;display:block;margin-bottom:8px;}
+.nivel-card-txt{font-size:13px;font-weight:800;color:var(--dark);}
+.nivel-card-sub{font-size:11px;color:var(--gray4);margin-top:3px;}
+
+/* Step 2 — simulado */
+.sim-progress{
+  height:6px;background:var(--gray2);border-radius:100px;margin-bottom:24px;overflow:hidden;
+}
+.sim-progress-bar{
+  height:100%;background:linear-gradient(90deg,#3B7FFF,#7B2FBE);
+  border-radius:100px;transition:width .4s ease;
+}
+.sim-q-num{
+  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;
+  color:var(--gray4);margin-bottom:8px;
+}
+.sim-q-tipo{
+  display:inline-block;font-size:10px;font-weight:700;
+  padding:3px 10px;border-radius:100px;margin-bottom:12px;
+}
+.sim-q-tipo.geral{background:var(--bluelt);color:var(--blue);}
+.sim-q-tipo.especifica{background:rgba(123,47,190,.1);color:#7B2FBE;}
+.sim-q-enunciado{
+  font-size:15px;font-weight:600;color:var(--dark);
+  line-height:1.65;margin-bottom:20px;
+}
+.sim-alternativas{display:flex;flex-direction:column;gap:10px;}
+.sim-alt{
+  display:flex;align-items:flex-start;gap:12px;
+  background:var(--gray1);border:1.5px solid var(--gray3);
+  border-radius:12px;padding:14px;cursor:pointer;transition:var(--tr);
+}
+.sim-alt:hover:not(.respondida){border-color:var(--blue);background:var(--bluelt);}
+.sim-alt.sel{border-color:var(--blue);background:var(--bluelt);}
+.sim-alt.correta{border-color:#34D399;background:#E8FBF4;}
+.sim-alt.errada{border-color:var(--red);background:var(--redlt);}
+.sim-alt.respondida{cursor:default;}
+.sim-alt-letra{
+  min-width:28px;height:28px;border-radius:50%;
+  background:var(--gray3);color:var(--dark);
+  font-size:12px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:var(--tr);
+}
+.sim-alt.sel .sim-alt-letra{background:var(--blue);color:#fff;}
+.sim-alt.correta .sim-alt-letra{background:#34D399;color:#fff;}
+.sim-alt.errada .sim-alt-letra{background:var(--red);color:#fff;}
+.sim-alt-txt{font-size:14px;color:var(--dark);line-height:1.5;}
+.sim-feedback{
+  margin-top:16px;border-radius:14px;padding:16px;
+  display:none;animation:fadeIn .2s ease;
+}
+.sim-feedback.show{display:block;}
+.sim-feedback.acerto{background:#E8FBF4;border:1.5px solid #34D399;}
+.sim-feedback.erro{background:var(--redlt);border:1.5px solid #ffcdd2;}
+.sim-feedback-titulo{font-size:14px;font-weight:800;margin-bottom:6px;}
+.sim-feedback.acerto .sim-feedback-titulo{color:#059669;}
+.sim-feedback.erro .sim-feedback-titulo{color:var(--red);}
+.sim-feedback-txt{font-size:13px;color:var(--gray5);line-height:1.6;}
+.sim-nav{display:flex;justify-content:flex-end;margin-top:20px;}
+
+/* Step 3 — resultado */
+.resultado-card{
+  background:#fff;border:1.5px solid var(--gray3);
+  border-radius:20px;overflow:hidden;box-shadow:var(--sh);
+  text-align:center;
+}
+.resultado-head{
+  background:linear-gradient(135deg,var(--ink),var(--blue));
+  padding:32px;position:relative;
+}
+.resultado-head::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#FFB800,transparent);}
+.resultado-score{
+  font-family:'Playfair Display',serif;
+  font-size:72px;font-weight:900;
+  line-height:1;
+}
+.resultado-score.otimo{background:linear-gradient(135deg,#34D399,#059669);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.resultado-score.bom{background:linear-gradient(135deg,#7EB3FF,#3B7FFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.resultado-score.regular{background:linear-gradient(135deg,#FFB800,#FF8C00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.resultado-score.fraco{background:linear-gradient(135deg,#ff6b6b,var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.resultado-label{font-size:13px;color:rgba(255,255,255,.6);margin-top:4px;}
+.resultado-msg{font-size:16px;font-weight:700;color:#fff;margin-top:10px;}
+.resultado-body{padding:28px;}
+.resultado-gabarito{display:flex;flex-direction:column;gap:10px;margin-bottom:24px;text-align:left;}
+.res-item{background:var(--gray1);border-radius:12px;padding:14px;border:1.5px solid var(--gray3);}
+.res-item.acerto{border-color:#34D399;background:#E8FBF4;}
+.res-item.erro{border-color:#ffcdd2;background:var(--redlt);}
+.res-item-header{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.res-item-ico{font-size:16px;}
+.res-item-q{font-size:11px;font-weight:700;color:var(--gray4);}
+.res-item-enunciado{font-size:13px;font-weight:600;color:var(--dark);margin-bottom:6px;line-height:1.5;}
+.res-item-resp{font-size:12px;color:var(--gray5);}
+.res-item-resp span{font-weight:700;}
+.res-item-resp .correta{color:#059669;}
+.res-item-resp .errada{color:var(--red);}
+.res-cta-box{
+  background:linear-gradient(135deg,var(--ink),var(--blue));
+  border-radius:16px;padding:24px;margin-top:8px;
+}
+.res-cta-box h3{font-size:18px;font-weight:900;color:#fff;margin-bottom:6px;}
+.res-cta-box p{font-size:13px;color:rgba(255,255,255,.65);margin-bottom:18px;line-height:1.6;}
+.res-cta-btn{
+  width:100%;padding:15px;
+  background:linear-gradient(135deg,#FFB800,#FF8C00);
+  color:#000;font-size:15px;font-weight:800;
+  border:none;border-radius:100px;cursor:pointer;
+  font-family:'Inter',sans-serif;transition:var(--tr);
+  box-shadow:0 6px 20px rgba(255,184,0,.35);
+}
+.res-cta-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,184,0,.5);}
+.res-cta-sec{
+  display:block;text-align:center;margin-top:12px;
+  font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;
+  transition:var(--tr);
+}
+.res-cta-sec:hover{color:rgba(255,255,255,.85);}
+</style>
+
+<div class="teste-body">
+
+  <!-- STEP 1: ESCOLHA DO PERFIL -->
+  <div class="teste-step ativo" id="teste-step-perfil">
+    <div class="perfil-card">
+      <div class="perfil-head">
+        <h2>🎯 Simulado Gratuito VERUS</h2>
+        <p>10 questões no padrão FGV · CESPE · VUNESP · FUNCAB</p>
+      </div>
+      <div class="perfil-form">
+        <div class="frm-g" style="margin-bottom:16px;">
+          <label class="frm-l" style="margin-bottom:10px;">Qual é o seu nível de escolaridade?</label>
+          <div class="nivel-grid">
+            <div class="nivel-card" onclick="selecionarNivelTeste('fundamental',this)" id="nt-fundamental">
+              <span class="nivel-card-ico">📖</span>
+              <div class="nivel-card-txt">Fundamental</div>
+              <div class="nivel-card-sub">10 questões gerais</div>
+            </div>
+            <div class="nivel-card" onclick="selecionarNivelTeste('medio',this)" id="nt-medio">
+              <span class="nivel-card-ico">📚</span>
+              <div class="nivel-card-txt">Médio</div>
+              <div class="nivel-card-sub">10 questões gerais</div>
+            </div>
+            <div class="nivel-card" onclick="selecionarNivelTeste('tecnico',this)" id="nt-tecnico">
+              <span class="nivel-card-ico">🔧</span>
+              <div class="nivel-card-txt">Técnico</div>
+              <div class="nivel-card-sub">5 gerais + 5 técnicas</div>
+            </div>
+            <div class="nivel-card" onclick="selecionarNivelTeste('superior',this)" id="nt-superior">
+              <span class="nivel-card-ico">🎓</span>
+              <div class="nivel-card-txt">Superior</div>
+              <div class="nivel-card-sub">5 gerais + 5 específicas</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="area-teste-wrap" style="display:none;">
+          <div class="frm-g">
+            <label class="frm-l" id="area-teste-label">Sua área de formação</label>
+            <select id="area-teste-sel" class="frm-i">
+              <option value="">Selecione sua área...</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="iniciarTeste()" id="btn-iniciar-teste" style="margin-top:8px;">
+          Iniciar simulado grátis 🚀
+        </button>
+        <p style="text-align:center;font-size:12px;color:var(--gray4);margin-top:10px;">Sem cadastro · Resultado imediato · Gratuito</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: QUESTÕES -->
+  <div class="teste-step" id="teste-step-simulado">
+    <div class="sim-progress">
+      <div class="sim-progress-bar" id="sim-progress-bar" style="width:0%"></div>
+    </div>
+    <div id="sim-questao-wrap">
+      <!-- questão renderizada pelo JS -->
+    </div>
+  </div>
+
+  <!-- STEP 3: RESULTADO -->
+  <div class="teste-step" id="teste-step-resultado">
+    <div class="resultado-card">
+      <div class="resultado-head">
+        <div class="resultado-score" id="res-score">0/10</div>
+        <div class="resultado-label">questões corretas</div>
+        <div class="resultado-msg" id="res-msg">—</div>
+      </div>
+      <div class="resultado-body">
+        <div class="resultado-gabarito" id="res-gabarito"></div>
+        <div class="res-cta-box">
+          <h3>🚀 Gostou? Estude de verdade!</h3>
+          <p>Nos planos VERUS você tem acesso a simulados completos de todos os concursos do Pará e Maranhão, com questões da sua área específica.</p>
+          <button class="res-cta-btn" onclick="ir('tela-cadastro')">Criar conta e assinar →</button>
+          <span class="res-cta-sec" onclick="ir('tela-landing')">Ver os planos primeiro</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div><!-- /tela-teste -->
+
+
+<!-- ════════════════════════════════════════════════════════════
+     TELA 2 — CADASTRO
+════════════════════════════════════════════════════════════ -->
+<div id="tela-cadastro" class="tela">
+  <nav class="nav">
+    <span class="nav-logo" onclick="ir('tela-landing')">VERUS</span>
+    <div class="nav-sep"></div>
+    <button class="nav-btn" onclick="ir('tela-landing')">← Voltar</button>
+  </nav>
+  <div class="auth-body">
+    <div class="auth-card">
+      <div class="auth-head">
+        <span class="auth-head-ico">🎯</span>
+        <h2>Criar Conta</h2>
+        <p>Cadastre-se e comece com 48h grátis</p>
+      </div>
+      <div class="auth-form">
+        <div class="trial-info">
+          <span>⏱</span>
+          <div>Ao criar sua conta você ganha <strong>48 horas de acesso completo e gratuito</strong>. Sem cartão de crédito. Sem compromisso.</div>
+        </div>
+
+        <div class="frm-g">
+          <label class="frm-l">Nome completo *</label>
+          <input id="cad-nome" class="frm-i" type="text" placeholder="Seu nome completo" autocomplete="name">
+        </div>
+        <div class="frm-g">
+          <label class="frm-l">E-mail *</label>
+          <input id="cad-email" class="frm-i" type="email" placeholder="seu@email.com" autocomplete="email">
+        </div>
+        <div class="frm-g">
+          <label class="frm-l">CPF *</label>
+          <input id="cad-cpf" class="frm-i" type="text" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" autocomplete="off" oninput="mascararCPF(this)">
+        </div>
+        <div class="frm-g">
+          <label class="frm-l">Senha * (mínimo 6 caracteres)</label>
+          <input id="cad-senha" class="frm-i" type="password" placeholder="••••••••" autocomplete="new-password">
+        </div>
+        <div class="frm-g">
+          <label class="frm-l">Confirmar senha *</label>
+          <input id="cad-senha2" class="frm-i" type="password" placeholder="••••••••" autocomplete="new-password">
+        </div>
+
+        <div class="frm-g">
+          <label class="frm-l" style="margin-bottom:8px;">Nível de escolaridade *</label>
+          <div class="level-grid">
+            <div class="level-btn" onclick="selLevel('fundamental')" id="lb-fundamental">
+              <span class="level-btn-ico">📖</span>
+              <div class="level-btn-txt">Fundamental</div>
+            </div>
+            <div class="level-btn" onclick="selLevel('medio')" id="lb-medio">
+              <span class="level-btn-ico">📚</span>
+              <div class="level-btn-txt">Médio</div>
+            </div>
+            <div class="level-btn" onclick="selLevel('tecnico')" id="lb-tecnico">
+              <span class="level-btn-ico">🔧</span>
+              <div class="level-btn-txt">Técnico</div>
+            </div>
+            <div class="level-btn" onclick="selLevel('superior')" id="lb-superior">
+              <span class="level-btn-ico">🎓</span>
+              <div class="level-btn-txt">Superior</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="area-wrap" style="display:none;">
+          <div class="frm-g">
+            <label class="frm-l" id="area-label">Área de formação *</label>
+            <select id="cad-area" class="frm-i">
+              <option value="">Selecione sua área...</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="frm-g" style="display:flex;align-items:flex-start;gap:8px;">
+          <input id="cad-aceite-politica" type="checkbox" style="margin-top:3px;width:16px;height:16px;flex-shrink:0;">
+          <label for="cad-aceite-politica" style="font-size:12.5px;color:var(--gray5);line-height:1.5;cursor:pointer;">
+            Li e aceito a <a onclick="event.preventDefault();abrirPolitica();" style="color:var(--blue);font-weight:600;cursor:pointer;">Política de Privacidade</a> *
+          </label>
+        </div>
+
+        <button class="btn btn-primary" onclick="cadastrar()" id="btn-cad">
+          Criar conta — 48h grátis 🚀
+        </button>
+      </div>
+      <div class="auth-foot">
+        Já tem conta? <a onclick="ir('tela-login')">Entrar agora</a>
+      </div>
+    </div>
+  </div>
+</div><!-- /tela-cadastro -->
+
+
+<!-- ════════════════════════════════════════════════════════════
+     TELA 3 — LOGIN
+════════════════════════════════════════════════════════════ -->
+<div id="tela-login" class="tela">
+  <div class="hex-bg" id="loginHexBg">
+    <div class="hex-grid"></div>
+    <div class="hex-layer l1"></div>
+    <div class="hex-layer l2"></div>
+    <div class="hex-dots"></div>
+    <div class="hex-glow hex-glow-card" id="loginHexGlow"></div>
+  </div>
+  <nav class="nav" style="position:relative;z-index:2;background:transparent;border-bottom:1px solid rgba(255,255,255,.08);box-shadow:none;">
+    <span class="nav-logo" onclick="ir('tela-landing')">VERUS</span>
+    <div class="nav-sep"></div>
+    <button class="nav-btn" onclick="ir('tela-landing')">← Voltar</button>
+  </nav>
+  <div class="auth-body">
+    <div class="auth-card">
+      <div class="auth-head">
+        <span class="auth-head-ico">🔐</span>
+        <h2>Entrar</h2>
+        <p>Acesse sua conta VERUS</p>
+      </div>
+      <div class="auth-form">
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <button type="button" id="log-tab-email" class="nav-btn" style="flex:1;background:var(--gold);color:var(--ink);border-color:var(--gold);" onclick="alternarLoginTipo('email')">E-mail</button>
+          <button type="button" id="log-tab-cpf" class="nav-btn" style="flex:1;" onclick="alternarLoginTipo('cpf')">CPF</button>
+        </div>
+        <div class="frm-g" id="log-email-wrap">
+          <label class="frm-l">E-mail</label>
+          <input id="log-email" class="frm-i" type="email" placeholder="seu@email.com" autocomplete="email">
+        </div>
+        <div class="frm-g" id="log-cpf-wrap" style="display:none;">
+          <label class="frm-l">CPF</label>
+          <input id="log-cpf" class="frm-i" type="text" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" autocomplete="off" oninput="mascararCPF(this)">
+        </div>
+        <div class="frm-g">
+          <label class="frm-l">Senha</label>
+          <input id="log-senha" class="frm-i" type="password" placeholder="••••••••" autocomplete="current-password"
+            onkeydown="if(event.key==='Enter')loginFn()">
+        </div>
+        <button class="btn btn-primary" onclick="loginFn()" id="btn-login">Entrar na plataforma</button>
+        <div style="text-align:center;margin-top:14px;">
+          <a style="font-size:13px;color:var(--cyan2);cursor:pointer;font-weight:600;" onclick="recuperarSenha()">Esqueci minha senha</a>
+        </div>
+      </div>
+      <div class="auth-foot">
+        Não tem conta? <a onclick="ir('tela-cadastro')">Cadastre-se grátis</a>
+      </div>
+    </div>
+  </div>
+</div><!-- /tela-login -->
+
+
+<!-- ════════════════════════════════════════════════════════════
+     TELA 4 — PAINEL DO CANDIDATO
+════════════════════════════════════════════════════════════ -->
+<div id="tela-painel" class="tela">
+  <nav class="nav">
+    <span class="nav-logo" onclick="ir('tela-painel')">VERUS</span>
+    <div class="nav-sep"></div>
+    <span class="nav-user" id="nav-user-nome"></span>
+    <span id="nav-status-badge" class="nav-badge trial">Trial</span>
+    <button class="nav-btn" onclick="sair()">Sair</button>
+  </nav>
+
+  <!-- Hero painel -->
+  <div class="painel-hero hero-bg">
+    <div class="painel-hero-top"></div>
+    <div class="painel-ola">Bem-vindo de volta,</div>
+    <div class="painel-nome" id="painel-nome">—</div>
+    <div class="painel-status-bar" id="painel-status-bar">
+      <div class="dot"></div>
+      <span id="painel-status-txt">Carregando...</span>
+    </div>
+  </div>
+
+  <div class="painel-body">
+
+    <!-- Timer / status de acesso -->
+    <div id="timer-box" class="timer-box">
+      <div class="timer-ico">⏱</div>
+      <div class="timer-info">
+        <div class="timer-label">Tempo de acesso gratuito restante</div>
+        <div class="timer-val" id="timer-val">--h --m</div>
+      </div>
+      <div class="timer-cta">
+        <button class="btn btn-gold btn-sm" onclick="ir('tela-planos')">Assinar plano</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="painel-stats">
+      <div class="pstat">
+        <div class="pstat-v" id="ps-simulados">0</div>
+        <div class="pstat-l">Simulados feitos</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-v" id="ps-acertos">—</div>
+        <div class="pstat-l">Taxa de acerto</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-v" id="ps-concursos">0</div>
+        <div class="pstat-l">Concursos disponíveis</div>
+      </div>
+      <div class="pstat">
+        <div class="pstat-v" id="ps-nivel">—</div>
+        <div class="pstat-l">Meu nível</div>
+      </div>
+    </div>
+
+    <!-- Modalidades de simulado -->
+    <div class="section-title" style="margin-top:8px;">Simulados</div>
+    <div class="sim-tabs" role="tablist">
+      <button class="sim-tab ativa" onclick="painelSimTab('aberto')" id="simtab-aberto">
+        <span class="sim-tab-ico">📝</span>
+        <span class="sim-tab-txt">Concursos em aberto</span>
+      </button>
+      <button class="sim-tab" onclick="painelSimTab('anteriores')" id="simtab-anteriores">
+        <span class="sim-tab-ico">📚</span>
+        <span class="sim-tab-txt">Provas anteriores</span>
+      </button>
+    </div>
+
+    <!-- Aba: Concursos em aberto -->
+    <div id="simpanel-aberto" class="sim-panel ativo">
+      <p class="sim-panel-desc">Simulados baseados nos concursos com inscrições abertas agora, filtrados pelo seu nível e área.</p>
+      <div class="painel-concursos" id="painel-concursos">
+        <div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--gray4);">
+          ⏳ Carregando concursos...
+        </div>
+      </div>
+    </div>
+
+    <!-- Aba: Provas de concursos anteriores (por banca) -->
+    <div id="simpanel-anteriores" class="sim-panel">
+      <p class="sim-panel-desc">Treine com provas reais de concursos que já aconteceram. Escolha a banca organizadora para começar.</p>
+      <div class="banca-grid" id="banca-grid">
+        <div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--gray4);">
+          🚧 Em breve — estamos organizando as provas por banca.
+        </div>
+      </div>
+    </div>
+
+    <!-- Histórico -->
+    <div class="section-title" style="margin-top:28px;">Histórico de simulados</div>
+    <div id="painel-historico">
+      <div style="text-align:center;padding:32px;color:var(--gray4);background:var(--white);border:1.5px solid var(--gray3);border-radius:var(--r16);">
+        📋 Nenhum simulado realizado ainda. Escolha um concurso acima para começar!
+      </div>
+    </div>
+
+  </div>
+</div><!-- /tela-painel -->
+
+
+<!-- ════════════════════════════════════════════════════════════
+     TELA 5 — PLANOS / PAGAMENTO PIX
+════════════════════════════════════════════════════════════ -->
+<div id="tela-planos" class="tela">
+  <nav class="nav">
+    <span class="nav-logo" onclick="ir('tela-landing')">VERUS</span>
+    <div class="nav-sep"></div>
+    <button class="nav-btn" id="btn-voltar-planos" onclick="ir('tela-painel')">← Voltar</button>
+    <button class="nav-btn" onclick="sair()">Sair</button>
+  </nav>
+  <div class="planos-body">
+
+    <div class="planos-hero">
+      <div class="eyebrow" style="display:inline-flex;">Assine e continue estudando</div>
+      <h2>Escolha seu plano</h2>
+      <p id="planos-trial-msg">Seu período de teste expirou. Assine agora para continuar com acesso completo.</p>
+    </div>
+
+    <!-- Seleção de planos -->
+    <div class="planos-grid-pg" id="planos-grid">
+      <div class="plano-pg-card" onclick="selPlano('mensal',this)" data-plano="mensal" data-valor="29.90" data-meses="1">
+        <div class="plano-pg-nome">Mensal</div>
+        <div class="plano-pg-preco">R$29<small style="font-size:20px;">,90</small></div>
+        <div class="plano-pg-mes">por mês</div>
+        <div class="plano-pg-total">Total: R$ 29,90</div>
+        <div class="plano-pg-eco">&nbsp;</div>
+      </div>
+      <div class="plano-pg-card" onclick="selPlano('trimestral',this)" data-plano="trimestral" data-valor="59.70" data-meses="3">
+        <div class="plano-pg-badge">✨ Mais popular</div>
+        <div class="plano-pg-nome">Trimestral</div>
+        <div class="plano-pg-preco">R$19<small style="font-size:20px;">,90</small></div>
+        <div class="plano-pg-mes">por mês · 3 meses</div>
+        <div class="plano-pg-total">Total: R$ 59,70</div>
+        <div class="plano-pg-eco">💰 Economia de R$ 30,00</div>
+      </div>
+      <div class="plano-pg-card" onclick="selPlano('semestral',this)" data-plano="semestral" data-valor="89.94" data-meses="6">
+        <div class="plano-pg-nome">Semestral</div>
+        <div class="plano-pg-preco">R$14<small style="font-size:20px;">,99</small></div>
+        <div class="plano-pg-mes">por mês · 6 meses</div>
+        <div class="plano-pg-total">Total: R$ 89,94</div>
+        <div class="plano-pg-eco">💰 Economia de R$ 89,46</div>
+      </div>
+    </div>
+
+    <!-- Box PIX -->
+    <div class="pix-box" id="pix-box">
+      <div class="pix-box-title">💚 Pagar via PIX — Mercado Pago</div>
+      <div class="pix-box-sub">Siga os passos abaixo para realizar o pagamento e liberar seu acesso.</div>
+
+      <div class="pix-valor-destaque">
+        <div class="vlabel">Valor a pagar</div>
+        <div class="vval" id="pix-valor-exibir">R$ —</div>
+      </div>
+
+      <div class="pix-steps">
+        <div class="pix-step">
+          <div class="pix-step-n">1</div>
+          <div class="pix-step-txt">
+            <h4>Abra o aplicativo do seu banco</h4>
+            <p>Acesse a área de PIX ou pagamentos do seu aplicativo bancário ou carteira digital.</p>
+          </div>
+        </div>
+        <div class="pix-step">
+          <div class="pix-step-n">2</div>
+          <div class="pix-step-txt">
+            <h4>Copie a chave PIX abaixo</h4>
+            <p>Use a chave PIX para realizar o pagamento. Certifique-se de pagar o valor exato do plano escolhido.</p>
+            <div class="pix-chave">
+              <div class="pix-chave-label">Chave PIX — Mercado Pago</div>
+              <div class="pix-chave-val" id="pix-chave-val">SUA_CHAVE_PIX_AQUI</div>
+              <div class="pix-chave-tipo" id="pix-chave-tipo">Tipo: E-mail / CPF / Telefone</div>
+              <button class="pix-btn-copy" onclick="copiarChave()">📋 Copiar chave PIX</button>
+            </div>
+          </div>
+        </div>
+        <div class="pix-step">
+          <div class="pix-step-n">3</div>
+          <div class="pix-step-txt">
+            <h4>Envie o comprovante</h4>
+            <p>Após o pagamento, <strong>envie o comprovante</strong> para o nosso WhatsApp ou e-mail de contato para agilizar a liberação.</p>
+          </div>
+        </div>
+        <div class="pix-step">
+          <div class="pix-step-n">4</div>
+          <div class="pix-step-txt">
+            <h4>Aguarde a liberação — até 10 minutos</h4>
+            <p>Após confirmarmos o pagamento, seu acesso é liberado em <strong>até 10 minutos</strong>. Você receberá uma notificação por e-mail.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="pix-aviso">
+        <span>⚠️</span>
+        <div>
+          <strong>Atenção:</strong> O acesso só é liberado após confirmação manual do pagamento pela nossa equipe. Horário de atendimento: segunda a sábado, das 8h às 20h. Pagamentos fora desse horário serão processados na reabertura do atendimento. Dúvidas? Entre em contato conosco.
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:20px;">
+        <button class="btn btn-primary" style="max-width:360px;" onclick="confirmarPagamento()">
+          ✅ Já realizei o pagamento
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /tela-planos -->
+
+
+<!-- ════════════════════════════════════════════════════════════
+     TELA 6 — ADMIN
+════════════════════════════════════════════════════════════ -->
+<div id="tela-admin" class="tela">
+  <nav class="nav">
+    <span class="nav-logo" onclick="ir('tela-admin')">VERUS</span>
+    <div class="nav-sep"></div>
+    <span style="font-size:11px;color:rgba(255,255,255,.6);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">Painel Admin</span>
+    <div class="nav-sep"></div>
+    <button class="nav-btn" onclick="sair()">Sair</button>
+  </nav>
+
+  <div class="admin-body">
+    <div class="admin-tabs">
+      <button class="admin-tab ativa" onclick="adminTab('usuarios')">👥 Usuários</button>
+      <button class="admin-tab" onclick="adminTab('pagamentos')">💳 Pagamentos</button>
+      <button class="admin-tab" onclick="adminTab('concursos')">📋 Concursos</button>
+      <button class="admin-tab" onclick="adminTab('novo-concurso')">➕ Novo Concurso</button>
+    </div>
+
+    <!-- ── Painel: Usuários ── -->
+    <div id="adm-usuarios" class="admin-panel ativo">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <h2 style="font-size:18px;font-weight:800;color:var(--dark);">Gerenciar Usuários</h2>
+        <button class="btn btn-outline btn-sm" onclick="carregarUsuarios()">🔄 Atualizar</button>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Nível</th>
+              <th>Área</th>
+              <th>Status</th>
+              <th>Expira em</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-usuarios">
+            <tr><td colspan="7" style="text-align:center;color:var(--gray4);padding:32px;">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Painel: Pagamentos ── -->
+    <div id="adm-pagamentos" class="admin-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <h2 style="font-size:18px;font-weight:800;color:var(--dark);">Solicitações de Pagamento (PIX)</h2>
+        <button class="btn btn-outline btn-sm" onclick="carregarPagamentos()">🔄 Atualizar</button>
+      </div>
+      <div id="pag-resumo" style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;"></div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Nome</th>
+              <th>E-mail</th>
+              <th>Plano</th>
+              <th>Valor</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-pagamentos">
+            <tr><td colspan="7" style="text-align:center;color:var(--gray4);padding:32px;">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Painel: Concursos listados ── -->
+    <div id="adm-concursos" class="admin-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <h2 style="font-size:18px;font-weight:800;color:var(--dark);">Concursos Cadastrados</h2>
+        <button class="btn btn-outline btn-sm" onclick="carregarConcursos()">🔄 Atualizar</button>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Órgão</th>
+              <th>Estado</th>
+              <th>Nível</th>
+              <th>Inscrições</th>
+              <th>Prova</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-concursos">
+            <tr><td colspan="8" style="text-align:center;color:var(--gray4);padding:32px;">Carregando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Painel: Novo concurso ── -->
+    <div id="adm-novo-concurso" class="admin-panel">
+      <div class="card" style="max-width:780px;">
+        <h2 style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:20px;">➕ Cadastrar Novo Concurso</h2>
+
+        <div class="form-2col">
+          <div class="frm-g">
+            <label class="frm-l">Nome do concurso *</label>
+            <input id="nc-nome" class="frm-i" type="text" placeholder="Ex.: Concurso Público Municipal de Mazagão">
+          </div>
+          <div class="frm-g">
+            <label class="frm-l">Órgão responsável *</label>
+            <input id="nc-orgao" class="frm-i" type="text" placeholder="Ex.: Prefeitura de Mazagão">
+          </div>
+        </div>
+
+        <div class="form-3col">
+          <div class="frm-g">
+            <label class="frm-l">Estado *</label>
+            <select id="nc-estado" class="frm-i">
+              <option value="">Selecione...</option>
+              <option>Pará</option>
+              <option>Maranhão</option>
+              <option>Amapá</option>
+              <option>Amazonas</option>
+              <option>Tocantins</option>
+              <option>Piauí</option>
+              <option>Outro</option>
+            </select>
+          </div>
+          <div class="frm-g">
+            <label class="frm-l">Nível exigido *</label>
+            <select id="nc-nivel" class="frm-i">
+              <option value="">Selecione...</option>
+              <option value="fundamental">Fundamental</option>
+              <option value="medio">Médio</option>
+              <option value="tecnico">Técnico</option>
+              <option value="superior">Superior</option>
+              <option value="todos">Todos os níveis</option>
+            </select>
+          </div>
+          <div class="frm-g">
+            <label class="frm-l">Status</label>
+            <select id="nc-status" class="frm-i">
+              <option value="ativo">Ativo</option>
+              <option value="em_breve">Em breve</option>
+              <option value="encerrado">Encerrado</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-3col">
+          <div class="frm-g">
+            <label class="frm-l">Início das inscrições</label>
+            <input id="nc-insc-ini" class="frm-i" type="date">
+          </div>
+          <div class="frm-g">
+            <label class="frm-l">Fim das inscrições</label>
+            <input id="nc-insc-fim" class="frm-i" type="date">
+          </div>
+          <div class="frm-g">
+            <label class="frm-l">Data da prova</label>
+            <input id="nc-data-prova" class="frm-i" type="date">
+          </div>
+        </div>
+
+        <div class="frm-g">
+          <label class="frm-l">Áreas / Cargos disponíveis *</label>
+          <div id="nc-areas-wrap" class="nc-areas-wrap">
+            <input id="nc-areas-busca" class="frm-i" type="text" placeholder="Buscar área... (ex: matemática)" oninput="filtrarAreasConcurso(this.value)">
+            <div id="nc-areas-lista" class="nc-areas-lista"></div>
+            <div id="nc-areas-sel" class="nc-areas-sel"></div>
+          </div>
+          <div style="font-size:11px;color:var(--gray4);margin-top:4px;">Marque todas as áreas/cargos deste concurso. Só candidatos dessas áreas verão este concurso.</div>
+        </div>
+
+        <div class="form-2col">
+          <div class="frm-g">
+            <label class="frm-l">Link do edital</label>
+            <input id="nc-edital" class="frm-i" type="url" placeholder="https://...">
+          </div>
+          <div class="frm-g">
+            <label class="frm-l">Arquivo de simulado (slug)</label>
+            <input id="nc-slug" class="frm-i" type="text" placeholder="Ex.: mazagao-2026 (nome do arquivo HTML)">
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary" style="max-width:260px;" onclick="salvarConcurso()">💾 Salvar concurso</button>
+          <button class="btn btn-ghost" onclick="limparFormConcurso()">Limpar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /tela-admin -->
+
+
+<!-- ════ MODAL: Liberar acesso manual ════ -->
+<div class="modal-overlay" id="modal-acesso">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>🔓 Liberar Acesso</h3>
+      <button class="modal-close" onclick="fecharModal('modal-acesso')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--gray5);margin-bottom:16px;">
+        Liberar acesso para: <strong id="modal-acesso-nome">—</strong>
+      </p>
+      <div class="frm-g">
+        <label class="frm-l">Plano</label>
+        <select id="modal-acesso-plano" class="frm-i">
+          <option value="mensal">Mensal (30 dias)</option>
+          <option value="trimestral">Trimestral (90 dias)</option>
+          <option value="semestral">Semestral (180 dias)</option>
+        </select>
+      </div>
+      <div class="frm-g">
+        <label class="frm-l">Observação (opcional)</label>
+        <input id="modal-acesso-obs" class="frm-i" type="text" placeholder="Ex.: Pago via PIX R$29,90 em 24/06/2026">
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button class="btn btn-primary" onclick="liberarAcesso()" style="flex:1;">✅ Confirmar liberação</button>
+        <button class="btn btn-ghost" onclick="fecharModal('modal-acesso')" style="flex:1;">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL: Detalhes concurso (candidato) ════ -->
+<div class="modal-overlay" id="modal-concurso">
+  <div class="modal-box" style="max-width:520px;">
+    <div class="modal-head">
+      <h3 id="modal-conc-titulo">Concurso</h3>
+      <button class="modal-close" onclick="fecharModal('modal-concurso')">✕</button>
+    </div>
+    <div class="modal-body" id="modal-conc-body">
+    </div>
+  </div>
+</div>
+
+
+<!-- ════ MODAL: Política de Privacidade ════ -->
+<div class="modal-overlay" id="modal-politica">
+  <div class="modal-box" style="max-width:640px;">
+    <div class="modal-head">
+      <h3>🔒 Política de Privacidade — VERUS</h3>
+      <button class="modal-close" onclick="fecharModal('modal-politica')">✕</button>
+    </div>
+    <div class="modal-body" style="max-height:60vh;overflow-y:auto;font-size:13.5px;line-height:1.7;color:var(--gray5);">
+      <p style="margin-bottom:10px;"><strong>1. Quem somos.</strong> A VERUS é uma plataforma de preparação para concursos públicos. Esta Política de Privacidade explica como coletamos, usamos, armazenamos e protegemos os dados pessoais dos nossos usuários, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD).</p>
+      <p style="margin-bottom:10px;"><strong>2. Dados que coletamos.</strong> Ao criar uma conta, coletamos nome completo, e-mail, CPF, senha (armazenada de forma criptografada), nível de escolaridade, área/cargo de interesse e dados de uso da plataforma (simulados realizados, respostas, desempenho e dispositivo de acesso).</p>
+      <p style="margin-bottom:10px;"><strong>3. Finalidade do uso do CPF.</strong> O CPF é utilizado para identificação única do candidato, controle de acesso (incluindo login) e prevenção de uso simultâneo da conta em múltiplos dispositivos durante o período de teste gratuito (trial).</p>
+      <p style="margin-bottom:10px;"><strong>4. Controle de dispositivos.</strong> Durante o período de trial, o acesso é vinculado a um único dispositivo/navegador, identificado a partir do CPF cadastrado, como medida de segurança e prevenção de compartilhamento indevido de conta. Assinantes de planos pagos podem acessar de qualquer número de dispositivos.</p>
+      <p style="margin-bottom:10px;"><strong>5. Compartilhamento de dados.</strong> Não vendemos nem compartilhamos seus dados pessoais com terceiros para fins comerciais. Os dados podem ser processados por fornecedores de infraestrutura (como serviços de hospedagem e autenticação) estritamente para o funcionamento da plataforma.</p>
+      <p style="margin-bottom:10px;"><strong>6. Armazenamento e segurança.</strong> Os dados são armazenados em ambiente seguro, com controle de acesso e criptografia, pelo tempo necessário para cumprir as finalidades descritas nesta política ou conforme exigido por lei.</p>
+      <p style="margin-bottom:10px;"><strong>7. Direitos do titular.</strong> Você pode, a qualquer momento, solicitar acesso, correção, portabilidade ou exclusão dos seus dados pessoais, entrando em contato pelo nosso canal de WhatsApp (91) 99322-2961.</p>
+      <p style="margin-bottom:10px;"><strong>8. Alterações desta política.</strong> Esta Política de Privacidade pode ser atualizada periodicamente. Recomendamos a leitura sempre que utilizar a plataforma.</p>
+      <p><strong>9. Contato.</strong> Em caso de dúvidas sobre esta política ou sobre o tratamento dos seus dados, fale conosco pelo WhatsApp (91) 99322-2961.</p>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════════════════════════════ -->
+<script>
+// ══════════════════════════════════════════════
+// CONFIGURAÇÃO FIREBASE
+// Substitua os valores abaixo pelas suas credenciais
+// Firebase Console → Seu projeto → Configurações do projeto
+// ══════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:            "AIzaSyBkWQUc57y2e9wEmseEleQ5B-009mCuIeM",
+  authDomain:        "verus-qi.firebaseapp.com",
+  projectId:         "verus-qi",
+  storageBucket:     "verus-qi.firebasestorage.app",
+  messagingSenderId: "1091557008194",
+  appId:             "1:1091557008194:web:052e85a5af23dd7c491edb"
+};
+
+// ── Chave PIX — edite aqui ──────────────────
+const PIX_CHAVE     = "SEU_EMAIL_OU_CPF_PIX@exemplo.com";
+const PIX_TIPO      = "E-mail (Mercado Pago)";
+const PIX_NOME_REC  = "VERUS Plataforma";
+
+// ── E-mail do admin único da plataforma ──────
+// Só esta conta tem acesso ao Painel Admin. O controle real e
+// definitivo é feito nas regras do Firestore (firestore.rules),
+// que travam por este mesmo e-mail. Aqui ele só é usado para
+// marcar admin:true automaticamente no cadastro/login.
+const ADMIN_EMAIL = "itamardevasconcelos90@gmail.com";
+
+// ══════════════════════════════════════════════
+// INIT FIREBASE
+// ══════════════════════════════════════════════
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// ══════════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════════
+let _usuario = null;   // dados do Firestore
+let _timerInt = null;  // setInterval do timer
+let _planoSel = null;  // plano selecionado na tela de planos
+let _modalUid = null;  // uid em edição no modal admin
+
+// ══════════════════════════════════════════════
+// NAVEGAÇÃO — SPA
+// ══════════════════════════════════════════════
+function ir(telaId) {
+  document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+  const tela = document.getElementById(telaId);
+  if (tela) {
+    tela.classList.add('ativa');
+    tela.scrollTop = 0;
+  }
+}
+
+// ══════════════════════════════════════════════
+// LOADER / TOAST
+// ══════════════════════════════════════════════
+function showLoader(v) {
+  document.getElementById('loader').classList.toggle('show', v);
+}
+let _toastTimer;
+function toast(msg, tipo = 'info') {
+  const el = document.getElementById('toast');
+  const cores = { info:'#1A56DB', sucesso:'#16A35A', erro:'#E5484D', aviso:'#B8860A' };
+  el.style.background = cores[tipo] || cores.info;
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// ══════════════════════════════════════════════
+// MODAIS
+// ══════════════════════════════════════════════
+function abrirModal(id) { document.getElementById(id).classList.add('show'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('show'); }
+function abrirPolitica() { abrirModal('modal-politica'); }
+
+// ══════════════════════════════════════════════
+// CPF — máscara e validação
+// ══════════════════════════════════════════════
+function mascararCPF(input) {
+  let v = input.value.replace(/\D/g, '').slice(0, 11);
+  v = v.replace(/(\d{3})(\d)/, '$1.$2');
+  v = v.replace(/(\d{3})(\d)/, '$1.$2');
+  v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  input.value = v;
+}
+function validarCPF(cpfStr) {
+  const cpf = (cpfStr || '').replace(/\D/g, '');
+  if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+  let soma = 0;
+  for (let i = 0; i < 9; i++) soma += parseInt(cpf[i]) * (10 - i);
+  let resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf[9])) return false;
+  soma = 0;
+  for (let i = 0; i < 10; i++) soma += parseInt(cpf[i]) * (11 - i);
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  return resto === parseInt(cpf[10]);
+}
+
+// ══════════════════════════════════════════════
+// LOGIN — alternar entre e-mail e CPF
+// ══════════════════════════════════════════════
+let _loginTipo = 'email';
+function alternarLoginTipo(tipo) {
+  _loginTipo = tipo;
+  document.getElementById('log-tab-email').style.background = tipo === 'email' ? 'var(--gold)' : 'rgba(255,255,255,.08)';
+  document.getElementById('log-tab-email').style.color = tipo === 'email' ? 'var(--ink)' : '#fff';
+  document.getElementById('log-tab-cpf').style.background = tipo === 'cpf' ? 'var(--gold)' : 'rgba(255,255,255,.08)';
+  document.getElementById('log-tab-cpf').style.color = tipo === 'cpf' ? 'var(--ink)' : '#fff';
+  document.getElementById('log-email-wrap').style.display = tipo === 'email' ? '' : 'none';
+  document.getElementById('log-cpf-wrap').style.display = tipo === 'cpf' ? '' : 'none';
+}
+
+// ══════════════════════════════════════════════
+// CONTROLE DE DISPOSITIVOS
+// Gera/recupera um identificador único deste navegador/dispositivo
+// e o vincula ao CPF do usuário enquanto ele estiver no trial.
+// ══════════════════════════════════════════════
+function obterDeviceId() {
+  let id = localStorage.getItem('verus_device_id');
+  if (!id) {
+    id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2, 12);
+    localStorage.setItem('verus_device_id', id);
+  }
+  return id;
+}
+
+// ══════════════════════════════════════════════
+// ÁREAS POR NÍVEL
+// ══════════════════════════════════════════════
+const AREAS = {
+  tecnico: [
+    // Saúde
+    'Técnico em Enfermagem','Técnico em Radiologia','Técnico em Farmácia',
+    'Técnico em Saúde Bucal','Técnico em Análises Clínicas','Técnico em Hemoterapia',
+    'Técnico em Imobilização Ortopédica','Técnico em Nutrição e Dietética',
+    'Técnico em Ótica','Técnico em Prótese Dentária','Técnico em Saúde Mental',
+    'Técnico em Vigilância em Saúde','Técnico em Necropsia',
+    // Meio Ambiente e Agropecuária
+    'Técnico em Meio Ambiente','Técnico em Agropecuária','Técnico em Florestas',
+    'Técnico em Pesca','Técnico em Zootecnia','Técnico em Meteorologia',
+    'Técnico em Saneamento','Técnico em Geologia',
+    // Tecnologia da Informação
+    'Técnico em Informática','Técnico em Redes de Computadores',
+    'Técnico em Manutenção e Suporte em TI','Técnico em Telecomunicações',
+    'Técnico em Eletrônica','Técnico em Automação Industrial',
+    // Administração e Gestão
+    'Técnico em Administração','Técnico em Contabilidade','Técnico em Logística',
+    'Técnico em Recursos Humanos','Técnico em Secretariado','Técnico em Marketing',
+    'Técnico em Comércio Exterior','Técnico em Finanças','Técnico em Cooperativismo',
+    'Técnico em Transações Imobiliárias',
+    // Engenharia e Construção
+    'Técnico em Edificações','Técnico em Eletrotécnica','Técnico em Mecânica',
+    'Técnico em Segurança do Trabalho','Técnico em Topografia','Técnico em Estradas',
+    'Técnico em Desenho de Construção Civil','Técnico em Mineração',
+    'Técnico em Petróleo e Gás','Técnico em Soldagem','Técnico em Refrigeração',
+    // Educação e Artes
+    'Técnico em Multimídia','Técnico em Comunicação Visual','Técnico em Instrumento Musical',
+    'Técnico em Regência','Técnico em Produção Cultural','Técnico em Artes Cênicas',
+    'Técnico em Dança','Técnico em Design de Interiores','Técnico em Fotografia',
+    // Turismo e Hospitalidade
+    'Técnico em Turismo','Técnico em Hospedagem','Técnico em Gastronomia',
+    'Técnico em Guia de Turismo','Técnico em Eventos',
+    // Segurança
+    'Técnico em Segurança Pública','Técnico em Bombeiro Civil',
+    // Jurídico
+    'Técnico em Serviços Jurídicos','Técnico em Serviços Notariais e de Registro',
+    // Outros
+    'Técnico em Biblioteconomia','Técnico em Museologia','Técnico em Arquivo',
+    'Técnico em Meteorologia','Técnico em Estatística',
+    'Outra área técnica'
+  ],
+  superior: [
+    // Ciências da Saúde
+    'Medicina','Enfermagem','Farmácia','Odontologia','Fisioterapia',
+    'Fonoaudiologia','Nutrição','Psicologia','Educação Física',
+    'Biomedicina','Biotecnologia','Medicina Veterinária','Zootecnia',
+    'Terapia Ocupacional','Saúde Coletiva','Radiologia',
+    // Ciências Exatas e da Terra
+    'Matemática','Física','Química','Estatística','Ciências da Computação',
+    'Sistemas de Informação','Análise e Desenvolvimento de Sistemas',
+    'Engenharia de Software','Ciência de Dados',
+    // Engenharias
+    'Engenharia Civil','Engenharia Elétrica','Engenharia Mecânica',
+    'Engenharia Química','Engenharia de Produção','Engenharia Ambiental',
+    'Engenharia de Alimentos','Engenharia Florestal','Engenharia de Pesca',
+    'Engenharia Agrícola','Engenharia de Telecomunicações','Engenharia Naval',
+    'Engenharia Aeronáutica','Engenharia de Petróleo','Engenharia Biomédica',
+    'Engenharia Sanitária','Engenharia de Minas','Engenharia Cartográfica',
+    // Ciências Agrárias
+    'Agronomia','Medicina Veterinária','Zootecnia','Engenharia Florestal',
+    'Biologia','Ecologia','Oceanografia','Geologia','Meteorologia',
+    // Ciências Sociais Aplicadas
+    'Administração','Ciências Contábeis','Ciências Econômicas','Direito',
+    'Serviço Social','Comunicação Social','Jornalismo','Publicidade e Propaganda',
+    'Relações Internacionais','Arquivologia','Biblioteconomia','Museologia',
+    'Gestão Pública','Administração Pública','Secretariado Executivo',
+    'Turismo','Hotelaria','Gastronomia','Logística','Comércio Exterior',
+    // Ciências Humanas
+    'Pedagogia','Filosofia','Sociologia','Antropologia','Ciências Sociais',
+    'História','Geografia','Arqueologia','Teologia',
+    // Letras e Linguística
+    'Letras — Português','Letras — Inglês','Letras — Espanhol','Letras — Francês',
+    'Letras — Alemão','Letras — Italiano','Letras — Japonês','Lingüística',
+    'Tradução e Interpretação',
+    // Artes
+    'Artes Visuais','Música','Teatro','Dança','Cinema e Audiovisual',
+    'Design Gráfico','Design de Interiores','Design de Moda','Arquitetura e Urbanismo',
+    // Educação / Licenciaturas
+    'Licenciatura em Matemática','Licenciatura em Física','Licenciatura em Química',
+    'Licenciatura em Biologia','Licenciatura em História','Licenciatura em Geografia',
+    'Licenciatura em Letras','Licenciatura em Artes','Licenciatura em Educação Física',
+    'Licenciatura em Pedagogia','Licenciatura em Filosofia','Licenciatura em Sociologia',
+    'Educação Especial','Educação do Campo',
+    // Outros
+    'Outro curso superior'
+  ]
+};
+
+// Lista única de todas as áreas (técnico + superior), sem duplicatas,
+// usada no multi-select de áreas do concurso (admin) — garante que o
+// filtro "área do usuário == área do concurso" seja sempre exato.
+const TODAS_AREAS = [...new Set([...AREAS.tecnico, ...AREAS.superior])].sort((a,b) => a.localeCompare(b,'pt-BR'));
+
+let _ncAreasSel = [];
+let _ncAreasBanco = {}; // { 'Nome do cargo': 'https://.../banco-questoes.json' }
+function atualizarBancoArea(area, url) {
+  _ncAreasBanco[area] = url;
+}
+function renderAreasConcursoLista(filtro) {
+  const lista = document.getElementById('nc-areas-lista');
+  if (!lista) return;
+  const f = (filtro || '').toLowerCase().trim();
+  const opcoes = f ? TODAS_AREAS.filter(a => a.toLowerCase().includes(f)) : TODAS_AREAS;
+  if (opcoes.length === 0) {
+    lista.innerHTML = '<div style="padding:8px;font-size:12px;color:var(--gray4);">Nenhuma área encontrada.</div>';
+    return;
+  }
+  lista.innerHTML = opcoes.slice(0, 60).map(a => {
+    const marcada = _ncAreasSel.includes(a);
+    return `<label class="nc-area-opt ${marcada?'marcada':''}">
+      <input type="checkbox" ${marcada?'checked':''} onchange="toggleAreaConcurso('${a.replace(/'/g,"\\'")}')">
+      ${a}
+    </label>`;
+  }).join('');
+}
+function filtrarAreasConcurso(v) { renderAreasConcursoLista(v); }
+function toggleAreaConcurso(area) {
+  const i = _ncAreasSel.indexOf(area);
+  if (i === -1) _ncAreasSel.push(area); else _ncAreasSel.splice(i,1);
+  renderAreasConcursoLista(document.getElementById('nc-areas-busca')?.value);
+  renderAreasConcursoChips();
+}
+function removerAreaConcurso(area) {
+  _ncAreasSel = _ncAreasSel.filter(a => a !== area);
+  delete _ncAreasBanco[area];
+  renderAreasConcursoLista(document.getElementById('nc-areas-busca')?.value);
+  renderAreasConcursoChips();
+}
+function renderAreasConcursoChips() {
+  const wrap = document.getElementById('nc-areas-sel');
+  if (!wrap) return;
+  wrap.innerHTML = _ncAreasSel.map(a => {
+    const aEsc = a.replace(/'/g,"\\'");
+    const urlAtual = (_ncAreasBanco[a] || '').replace(/"/g,'&quot;');
+    return `<div class="nc-area-banco-row" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+      <span class="nc-area-chip">${a}<button type="button" onclick="removerAreaConcurso('${aEsc}')">×</button></span>
+      <input type="url" class="frm-i" style="flex:1;min-width:220px;max-width:360px;font-size:12px;padding:6px 10px;"
+        placeholder="Link do banco de questões (JSON) para este cargo — opcional por enquanto"
+        value="${urlAtual}" oninput="atualizarBancoArea('${aEsc}', this.value.trim())">
+    </div>`;
+  }).join('');
+}
+
+let _levelSel = '';
+function selLevel(level) {
+  _levelSel = level;
+  ['fundamental','medio','tecnico','superior'].forEach(l => {
+    document.getElementById('lb-'+l).classList.toggle('sel', l === level);
+  });
+  const areaWrap = document.getElementById('area-wrap');
+  const areaLabel = document.getElementById('area-label');
+  const sel = document.getElementById('cad-area');
+  if (level === 'tecnico' || level === 'superior') {
+    areaWrap.style.display = 'block';
+    areaLabel.textContent = level === 'tecnico' ? 'Formação técnica *' : 'Área de graduação *';
+    sel.innerHTML = '<option value="">Selecione sua área...</option>';
+    AREAS[level].forEach(a => {
+      sel.innerHTML += `<option value="${a}">${a}</option>`;
+    });
+  } else {
+    areaWrap.style.display = 'none';
+  }
+}
+
+// Mapeamento legível de nível
+const NIVEL_LABEL = {
+  fundamental: 'Fundamental',
+  medio: 'Médio',
+  tecnico: 'Técnico',
+  superior: 'Superior',
+  todos: 'Todos os níveis'
+};
+
+// ══════════════════════════════════════════════
+// CADASTRO
+// ══════════════════════════════════════════════
+async function cadastrar() {
+  const nome   = document.getElementById('cad-nome').value.trim();
+  const email  = document.getElementById('cad-email').value.trim();
+  const cpf    = document.getElementById('cad-cpf').value.trim();
+  const senha  = document.getElementById('cad-senha').value;
+  const senha2 = document.getElementById('cad-senha2').value;
+  const area   = document.getElementById('cad-area').value;
+  const aceitouPolitica = document.getElementById('cad-aceite-politica').checked;
+
+  if (!nome)        return toast('Informe seu nome completo.', 'erro');
+  if (!email)       return toast('Informe seu e-mail.', 'erro');
+  if (!validarCPF(cpf)) return toast('Informe um CPF válido.', 'erro');
+  if (senha.length < 6) return toast('A senha deve ter pelo menos 6 caracteres.', 'erro');
+  if (senha !== senha2) return toast('As senhas não coincidem.', 'erro');
+  if (!_levelSel)   return toast('Selecione seu nível de escolaridade.', 'erro');
+  if ((_levelSel === 'tecnico' || _levelSel === 'superior') && !area)
+    return toast('Selecione sua área de formação.', 'erro');
+  if (!aceitouPolitica) return toast('Você precisa aceitar a Política de Privacidade para continuar.', 'erro');
+
+  const cpfLimpo = cpf.replace(/\D/g, '');
+
+  const btn = document.getElementById('btn-cad');
+  btn.disabled = true;
+  btn.textContent = 'Criando conta...';
+  showLoader(true);
+
+  try {
+    // Garante que o CPF ainda não foi usado em outro cadastro
+    const cpfExistente = await db.collection('usuarios').where('cpf', '==', cpfLimpo).limit(1).get();
+    if (!cpfExistente.empty) {
+      toast('Este CPF já está cadastrado.', 'erro');
+      btn.disabled = false;
+      btn.textContent = 'Criar conta — 48h grátis 🚀';
+      showLoader(false);
+      return;
+    }
+
+    const cred = await auth.createUserWithEmailAndPassword(email, senha);
+
+    try {
+      await cred.user.updateProfile({ displayName: nome });
+
+      const agora = Date.now();
+      const expiraTrial = agora + 48 * 60 * 60 * 1000; // 48h
+
+      await db.collection('usuarios').doc(cred.user.uid).set({
+        nome, email,
+        cpf: cpfLimpo,
+        escolaridade: _levelSel,
+        area: area || '',
+        data_cadastro: agora,
+        acesso_expira: expiraTrial,
+        plano: 'trial',
+        simulados_feitos: 0,
+        total_acertos: 0,
+        total_questoes: 0,
+        aceitou_politica: true,
+        aceitou_politica_em: agora,
+        dispositivo_id: obterDeviceId(),
+        admin: email.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+      });
+
+      toast('Conta criada! Boas-vindas ao VERUS 🎉', 'sucesso');
+      await carregarUsuarioLogado(cred.user.uid);
+      ir('tela-painel');
+    } catch (eFirestore) {
+      // A conta foi criada no Authentication mas o perfil não foi salvo
+      // no Firestore (geralmente por falta de permissão nas regras).
+      // Desfaz a criação no Authentication para não deixar uma conta
+      // "pela metade", sem dados — assim o usuário pode tentar de novo.
+      console.error('Erro ao salvar perfil no Firestore:', eFirestore.code, eFirestore.message);
+      try { await cred.user.delete(); } catch {}
+      throw eFirestore;
+    }
+  } catch(e) {
+    console.error('Erro no cadastro:', e.code, e.message);
+    let msg = 'Erro ao criar conta.';
+    if (e.code === 'auth/email-already-in-use') msg = 'Este e-mail já está cadastrado.';
+    else if (e.code === 'auth/invalid-email')   msg = 'E-mail inválido.';
+    else if (e.code === 'auth/weak-password')   msg = 'Senha muito fraca. Use pelo menos 6 caracteres.';
+    else if (e.code === 'auth/operation-not-allowed') msg = 'Cadastro por e-mail/senha está desativado no Firebase. Ative em Authentication → Sign-in method.';
+    else if (e.code === 'auth/invalid-api-key' || e.code === 'auth/api-key-not-valid') msg = 'Configuração do Firebase incorreta (API Key inválida).';
+    else if (e.code === 'auth/network-request-failed') msg = 'Falha de conexão. Verifique sua internet e tente novamente.';
+    else if (e.code === 'permission-denied' || e.message?.includes('permission')) msg = 'Sem permissão para salvar os dados. Verifique as regras do Firestore.';
+    else if (e.code) msg = 'Erro ao criar conta (' + e.code + ').';
+    toast(msg, 'erro');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Criar conta — 48h grátis 🚀';
+    showLoader(false);
+  }
+}
+
+// ══════════════════════════════════════════════
+// LOGIN
+// ══════════════════════════════════════════════
+async function loginFn() {
+  const senha = document.getElementById('log-senha').value;
+  let email = document.getElementById('log-email').value.trim();
+
+  if (!senha) return toast('Informe sua senha.', 'erro');
+
+  const btn = document.getElementById('btn-login');
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+  showLoader(true);
+
+  try {
+    // Login por CPF: busca o e-mail vinculado ao CPF no Firestore
+    if (_loginTipo === 'cpf') {
+      const cpf = document.getElementById('log-cpf').value.trim();
+      if (!validarCPF(cpf)) throw { code: 'cpf/invalido' };
+      const cpfLimpo = cpf.replace(/\D/g, '');
+      const busca = await db.collection('usuarios').where('cpf', '==', cpfLimpo).limit(1).get();
+      if (busca.empty) throw { code: 'cpf/nao-encontrado' };
+      email = busca.docs[0].data().email;
+    } else if (!email) {
+      throw { code: 'email/vazio' };
+    }
+
+    const cred = await auth.signInWithEmailAndPassword(email, senha);
+    await carregarUsuarioLogado(cred.user.uid);
+
+    // ── Controle de dispositivos ──
+    // Usuários em trial só podem estar logados em 1 dispositivo/navegador,
+    // identificado pelo CPF. Usuários com plano pago acessam livremente.
+    const u = _usuario;
+    if (u && u.plano === 'trial') {
+      const meuDeviceId = obterDeviceId();
+      if (u.dispositivo_id && u.dispositivo_id !== meuDeviceId) {
+        await auth.signOut();
+        _usuario = null;
+        toast('Sua conta de teste já está em uso em outro dispositivo. Assine um plano para acessar de qualquer lugar.', 'erro');
+        return;
+      }
+      if (!u.dispositivo_id) {
+        await db.collection('usuarios').doc(cred.user.uid).update({ dispositivo_id: meuDeviceId });
+        _usuario.dispositivo_id = meuDeviceId;
+      }
+    }
+
+    // Redireciona para admin se for admin
+    if (_usuario && _usuario.admin) {
+      ir('tela-admin');
+      carregarUsuarios();
+    } else {
+      ir('tela-painel');
+    }
+  } catch(e) {
+    console.error('Erro no login:', e.code, e.message);
+    let msg = 'E-mail ou senha incorretos.';
+    if (e.code === 'auth/user-not-found') msg = 'Usuário não encontrado.';
+    else if (e.code === 'auth/wrong-password') msg = 'Senha incorreta.';
+    else if (e.code === 'auth/invalid-email') msg = 'E-mail inválido.';
+    else if (e.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Aguarde um pouco e tente de novo.';
+    else if (e.code === 'auth/network-request-failed') msg = 'Falha de conexão. Verifique sua internet.';
+    else if (e.code === 'auth/invalid-api-key' || e.code === 'auth/api-key-not-valid') msg = 'Configuração do Firebase incorreta (API Key inválida).';
+    else if (e.code === 'cpf/invalido') msg = 'Informe um CPF válido.';
+    else if (e.code === 'cpf/nao-encontrado') msg = 'Nenhuma conta encontrada com esse CPF.';
+    else if (e.code === 'email/vazio') msg = 'Informe seu e-mail.';
+    toast(msg, 'erro');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Entrar na plataforma';
+    showLoader(false);
+  }
+}
+
+async function recuperarSenha() {
+  const email = document.getElementById('log-email').value.trim();
+  if (!email) return toast('Digite seu e-mail para recuperar a senha.', 'aviso');
+  try {
+    await auth.sendPasswordResetEmail(email);
+    toast('E-mail de recuperação enviado!', 'sucesso');
+  } catch { toast('Erro ao enviar e-mail.', 'erro'); }
+}
+
+// ══════════════════════════════════════════════
+// LOGOUT
+// ══════════════════════════════════════════════
+async function sair() {
+  clearInterval(_timerInt);
+  await auth.signOut();
+  _usuario = null;
+  ir('tela-landing');
+  toast('Você saiu da sua conta.', 'info');
+}
+
+// ══════════════════════════════════════════════
+// CARREGAR DADOS DO USUÁRIO LOGADO
+// ══════════════════════════════════════════════
+async function carregarUsuarioLogado(uid) {
+  const snap = await db.collection('usuarios').doc(uid).get();
+  _usuario = { uid, ...(snap.data() || {}) };
+}
+
+// ══════════════════════════════════════════════
+// PAINEL — abas de modalidade de simulado
+// ══════════════════════════════════════════════
+function painelSimTab(tab) {
+  ['aberto','anteriores'].forEach(t => {
+    document.getElementById('simtab-' + t).classList.toggle('ativa', t === tab);
+    document.getElementById('simpanel-' + t).classList.toggle('ativo', t === tab);
+  });
+  if (tab === 'anteriores') carregarBancasDisponiveis();
+}
+
+// Lista de bancas organizadoras mais comuns em concursos públicos do
+// Pará e Maranhão. Por enquanto é só estrutura visual — a busca real
+// dos simulados por banca será conectada depois que o layout for
+// aprovado.
+const BANCAS = [
+  { id:'fgv',      nome:'FGV',                 ico:'🏛️' },
+  { id:'cebraspe', nome:'CEBRASPE / CESPE',     ico:'📘' },
+  { id:'vunesp',   nome:'VUNESP',               ico:'📗' },
+  { id:'funcab',   nome:'FUNCAB',               ico:'📙' },
+  { id:'ibfc',     nome:'IBFC',                 ico:'📕' },
+  { id:'aocp',     nome:'AOCP',                 ico:'📓' },
+  { id:'fcc',      nome:'FCC',                  ico:'📔' },
+  { id:'iades',    nome:'IADES',                ico:'📒' },
+];
+
+function carregarBancasDisponiveis() {
+  const grid = document.getElementById('banca-grid');
+  grid.innerHTML = BANCAS.map(b => `
+    <div class="banca-card" onclick="abrirBanca('${b.id}','${b.nome}')">
+      <div class="banca-card-ico">${b.ico}</div>
+      <div class="banca-card-nome">${b.nome}</div>
+      <div class="banca-card-qtd">Em breve</div>
+    </div>
+  `).join('');
+}
+
+function abrirBanca(id, nome) {
+  toast(`Provas da banca ${nome} chegando em breve para a sua área!`, 'info');
+}
+
+// ══════════════════════════════════════════════
+// PAINEL — render
+// ══════════════════════════════════════════════
+function renderPainel() {
+  if (!_usuario) return;
+  const u = _usuario;
+  const agora = Date.now();
+  const expira = u.acesso_expira || 0;
+  const ativo = agora < expira;
+  const restante = expira - agora;
+
+  // Nav
+  document.getElementById('nav-user-nome').textContent = u.nome || u.email;
+  const navBadge = document.getElementById('nav-status-badge');
+
+  // Nome hero
+  const primeiroNome = (u.nome || '').split(' ')[0] || 'Candidato';
+  document.getElementById('painel-nome').textContent = primeiroNome;
+
+  // Status bar
+  const barEl = document.getElementById('painel-status-bar');
+  const barTxt = document.getElementById('painel-status-txt');
+
+  if (ativo) {
+    if (u.plano === 'trial') {
+      navBadge.className = 'nav-badge trial';
+      navBadge.textContent = '⏱ Trial';
+      barEl.className = 'painel-status-bar';
+      barTxt.textContent = `Acesso de teste — ${formatarTempo(restante)} restantes`;
+    } else {
+      navBadge.className = 'nav-badge';
+      navBadge.textContent = '✅ Ativo';
+      barEl.className = 'painel-status-bar ativo';
+      barTxt.textContent = `Plano ${NIVEL_LABEL[u.plano] || u.plano || ''} ativo — expira em ${formatarData(expira)}`;
+    }
+  } else {
+    navBadge.className = 'nav-badge expirado';
+    navBadge.textContent = '🔒 Expirado';
+    barEl.className = 'painel-status-bar expirado';
+    barTxt.textContent = 'Acesso expirado — assine um plano para continuar';
+  }
+
+  // Timer box
+  const timerBox = document.getElementById('timer-box');
+  const timerVal = document.getElementById('timer-val');
+  if (u.plano === 'trial' && ativo) {
+    timerBox.style.display = 'flex';
+    timerBox.classList.remove('expirado');
+    timerVal.classList.remove('expirado');
+    timerVal.textContent = formatarTempo(restante);
+    clearInterval(_timerInt);
+    _timerInt = setInterval(() => {
+      const r = (u.acesso_expira || 0) - Date.now();
+      if (r <= 0) {
+        timerVal.textContent = 'Expirado';
+        timerVal.classList.add('expirado');
+        timerBox.classList.add('expirado');
+        clearInterval(_timerInt);
+        renderPainel();
+      } else {
+        timerVal.textContent = formatarTempo(r);
+      }
+    }, 30000);
+  } else if (!ativo) {
+    timerBox.style.display = 'flex';
+    timerBox.classList.add('expirado');
+    timerVal.classList.add('expirado');
+    timerVal.textContent = 'Expirado';
+    clearInterval(_timerInt);
+  } else {
+    timerBox.style.display = 'none';
+    clearInterval(_timerInt);
+  }
+
+  // Stats
+  document.getElementById('ps-simulados').textContent = u.simulados_feitos || 0;
+  const taxa = u.total_questoes > 0
+    ? Math.round((u.total_acertos / u.total_questoes) * 100) + '%'
+    : '—';
+  document.getElementById('ps-acertos').textContent = taxa;
+  document.getElementById('ps-nivel').textContent = NIVEL_LABEL[u.escolaridade] || '—';
+
+  // Concursos
+  carregarConcursosPainel(ativo);
+}
+
+// ══════════════════════════════════════════════
+// CARREGAR CONCURSOS NO PAINEL
+// ══════════════════════════════════════════════
+// Verifica se um concurso é compatível com o perfil do usuário logado:
+// 1) nível precisa bater (ou o concurso aceitar "todos")
+// 2) se o usuário tem uma área definida (técnico/superior) e o concurso
+//    também lista áreas, a área do usuário PRECISA estar na lista —
+//    comparação exata, não por trecho de texto.
+function concursoCombinaComUsuario(c) {
+  const nivel = _usuario?.escolaridade;
+  if (c.nivel && c.nivel !== 'todos' && c.nivel !== nivel) return false;
+
+  const areaUsuario = _usuario?.area;
+  if (areaUsuario && Array.isArray(c.areas) && c.areas.length > 0) {
+    return c.areas.includes(areaUsuario);
+  }
+  // Concurso sem áreas cadastradas (ex: fundamental/médio) → vale para todos do nível
+  return true;
+}
+
+async function carregarConcursosPainel(acessoAtivo) {
+  const container = document.getElementById('painel-concursos');
+  container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--gray4);">⏳ Carregando...</div>';
+
+  try {
+    let query = db.collection('concursos').where('status', '==', 'ativo');
+    const snap = await query.get();
+    const todos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+    const filtrados = todos.filter(concursoCombinaComUsuario);
+
+    document.getElementById('ps-concursos').textContent = filtrados.length;
+
+    if (filtrados.length === 0) {
+      container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray4);background:var(--white);border:1.5px solid var(--gray3);border-radius:var(--r16);">📋 Nenhum concurso disponível para o seu perfil no momento.<br>Fique de olho — novos concursos são adicionados regularmente!</div>';
+      return;
+    }
+
+    container.innerHTML = filtrados.map(c => {
+      const bloq = !acessoAtivo;
+      const statusColor = { ativo: 'badge-green', em_breve: 'badge-gold', encerrado: 'badge-red' };
+      return `
+        <div class="pc-card ${bloq ? 'bloqueado' : ''}" onclick="${bloq ? 'ir(\'tela-planos\')' : `abrirConcurso('${c.id}')`}">
+          <div class="pc-top">
+            <div>
+              <div class="pc-orgao">${c.orgao || ''}</div>
+              <div class="pc-nome">${c.nome}</div>
+            </div>
+            ${bloq ? '<div class="pc-lock">🔒</div>' : ''}
+          </div>
+          <div class="pc-badges">
+            <span class="badge ${statusColor[c.status] || 'badge-gray'}">${c.status === 'ativo' ? '✅ Ativo' : c.status === 'em_breve' ? '🔜 Em breve' : '🔴 Encerrado'}</span>
+            <span class="badge badge-blue">${NIVEL_LABEL[c.nivel] || c.nivel}</span>
+            <span class="badge badge-gray">${c.estado || ''}</span>
+          </div>
+          <div class="pc-footer">
+            <div class="pc-data">Prova: ${c.data_prova ? formatarData(c.data_prova) : 'A definir'}</div>
+            ${!bloq ? `<button class="pc-btn" onclick="event.stopPropagation();abrirConcurso('${c.id}')">Acessar →</button>` : '<span style="font-size:12px;color:var(--blue);font-weight:600;">Assinar plano</span>'}
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--red);">Erro ao carregar concursos.</div>';
+  }
+}
+
+// ══════════════════════════════════════════════
+// ABRIR CONCURSO (modal detalhes + link para arquivo)
+// ══════════════════════════════════════════════
+async function abrirConcurso(id) {
+  const snap = await db.collection('concursos').doc(id).get();
+  if (!snap.exists) return toast('Concurso não encontrado.', 'erro');
+  const c = snap.data();
+
+  document.getElementById('modal-conc-titulo').textContent = c.nome;
+  const body = document.getElementById('modal-conc-body');
+  const slug = c.slug || '';
+
+  body.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="badge badge-green">${c.status === 'ativo' ? '✅ Ativo' : c.status}</span>
+        <span class="badge badge-blue">${NIVEL_LABEL[c.nivel] || c.nivel}</span>
+        <span class="badge badge-gray">${c.estado}</span>
+      </div>
+      <div style="background:var(--gray1);border-radius:var(--r12);padding:14px;">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray4);margin-bottom:6px;">Informações</div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse;">
+          <tr><td style="padding:4px 0;color:var(--gray4);width:140px;">Órgão</td><td style="font-weight:600;">${c.orgao}</td></tr>
+          <tr><td style="padding:4px 0;color:var(--gray4);">Inscrições</td><td>${c.insc_ini ? formatarData(c.insc_ini) : '—'} até ${c.insc_fim ? formatarData(c.insc_fim) : '—'}</td></tr>
+          <tr><td style="padding:4px 0;color:var(--gray4);">Data da prova</td><td style="font-weight:600;">${c.data_prova ? formatarData(c.data_prova) : 'A definir'}</td></tr>
+          ${c.areas && c.areas.length ? `<tr><td style="padding:4px 0;color:var(--gray4);">Cargos / Áreas</td><td>${Array.isArray(c.areas) ? c.areas.join(', ') : c.areas}</td></tr>` : ''}
+        </table>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+        ${slug
+          ? `<button class="btn btn-primary" onclick="abrirSimulado('${slug}');fecharModal('modal-concurso')">🚀 Acessar Simulado</button>`
+          : `<div style="background:var(--bluelt);border-radius:var(--r12);padding:14px;text-align:center;font-size:13px;color:var(--blue);">📋 Simulado em preparação. Em breve disponível!</div>`
+        }
+        ${c.edital ? `<a href="${c.edital}" target="_blank" style="text-align:center;font-size:13px;color:var(--blue);font-weight:600;padding:10px;border:1.5px solid var(--blue);border-radius:var(--r12);text-decoration:none;">📄 Ver Edital Oficial</a>` : ''}
+      </div>
+    </div>`;
+
+  abrirModal('modal-concurso');
+}
+
+// Abre o arquivo HTML do simulado do concurso
+function abrirSimulado(slug) {
+  // Abre o arquivo do concurso — você cria cada arquivo como: concursos/mazagao-2026.html
+  window.open(`concursos/${slug}.html`, '_blank');
+}
+
+// ══════════════════════════════════════════════
+// LANDING — carregar concursos públicos preview
+// ══════════════════════════════════════════════
+async function carregarLandingConcursos() {
+  try {
+    const snap = await db.collection('concursos')
+      .where('status', '==', 'ativo')
+      .limit(6)
+      .get();
+
+    document.getElementById('stat-concursos').textContent = snap.size;
+
+    const container = document.getElementById('land-concursos');
+    if (snap.empty) {
+      container.innerHTML = '<div class="cc-empty">📋 Nenhum concurso ativo no momento. Fique de olho!</div>';
+      return;
+    }
+    container.innerHTML = snap.docs.map(d => {
+      const c = d.data();
+      const statusColor = { ativo:'badge-green', em_breve:'badge-gold', encerrado:'badge-red' };
+      return `
+        <div class="cc-card">
+          <div class="cc-top">
+            <div>
+              <div class="cc-orgao">${c.orgao || ''}</div>
+              <div class="cc-nome">${c.nome}</div>
+            </div>
+            <span class="badge ${statusColor[c.status] || 'badge-gray'}" style="flex-shrink:0;">${c.status === 'ativo' ? 'Ativo' : c.status === 'em_breve' ? 'Em breve' : 'Encerrado'}</span>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+            <span class="badge badge-blue">${NIVEL_LABEL[c.nivel] || c.nivel}</span>
+            <span class="badge badge-gray">${c.estado}</span>
+          </div>
+          <div class="cc-info">
+            <span class="cc-data">📅 Prova: ${c.data_prova ? formatarData(c.data_prova) : 'A definir'}</span>
+          </div>
+          <div style="margin-top:12px;">
+            <button class="btn btn-outline btn-sm" onclick="ir('tela-cadastro')">Estudar para este concurso →</button>
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    console.warn('Erro ao carregar concursos da landing:', e);
+  }
+}
+
+// Stats da landing (usuários e simulados — pode usar counters no Firestore futuramente)
+async function carregarStatsLanding() {
+  try {
+    const statsSnap = await db.collection('_stats').doc('global').get();
+    if (statsSnap.exists) {
+      const s = statsSnap.data();
+      if (s.usuarios)   document.getElementById('stat-usuarios').textContent   = s.usuarios + '+';
+      if (s.simulados)  document.getElementById('stat-simulados').textContent  = s.simulados + '+';
+    }
+  } catch {}
+}
+
+// ══════════════════════════════════════════════
+// PLANOS — seleção e PIX
+// ══════════════════════════════════════════════
+function selPlano(nome, el) {
+  document.querySelectorAll('.plano-pg-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  _planoSel = {
+    nome,
+    valor: el.dataset.valor,
+    meses: parseInt(el.dataset.meses)
+  };
+  document.getElementById('pix-valor-exibir').textContent = 'R$ ' + parseFloat(_planoSel.valor).toFixed(2).replace('.',',');
+  document.getElementById('pix-chave-val').textContent  = PIX_CHAVE;
+  document.getElementById('pix-chave-tipo').textContent = 'Tipo: ' + PIX_TIPO;
+  document.getElementById('pix-box').classList.add('show');
+  document.getElementById('pix-box').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function copiarChave() {
+  navigator.clipboard.writeText(PIX_CHAVE)
+    .then(() => toast('Chave PIX copiada!', 'sucesso'))
+    .catch(() => toast('Copie manualmente: ' + PIX_CHAVE, 'aviso'));
+}
+
+async function confirmarPagamento() {
+  if (!_usuario) return toast('Faça login primeiro.', 'erro');
+  if (!_planoSel) return toast('Selecione um plano acima.', 'aviso');
+  // Salva solicitação de pagamento no Firestore para o admin ver
+  try {
+    await db.collection('pagamentos').add({
+      uid: _usuario.uid,
+      nome: _usuario.nome,
+      email: _usuario.email,
+      plano: _planoSel.nome,
+      valor: _planoSel.valor,
+      meses: _planoSel.meses,
+      data: Date.now(),
+      status: 'aguardando_confirmacao'
+    });
+    toast('Solicitação registrada! Seu acesso será liberado em até 10 minutos após confirmação do pagamento.', 'sucesso');
+    setTimeout(() => ir('tela-painel'), 2200);
+  } catch {
+    toast('Erro ao registrar. Entre em contato conosco.', 'erro');
+  }
+}
+
+// ══════════════════════════════════════════════
+// ADMIN — tabs
+// ══════════════════════════════════════════════
+function adminTab(tab) {
+  const tabs = document.querySelectorAll('.admin-tab');
+  tabs.forEach(t => t.classList.remove('ativa'));
+  const map = { usuarios: 0, pagamentos: 1, concursos: 2, 'novo-concurso': 3 };
+  if (tabs[map[tab]]) tabs[map[tab]].classList.add('ativa');
+
+  document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('ativo'));
+  const panel = document.getElementById('adm-' + tab);
+  if (panel) panel.classList.add('ativo');
+
+  if (tab === 'usuarios') carregarUsuarios();
+  if (tab === 'pagamentos') carregarPagamentos();
+  if (tab === 'concursos') carregarConcursos();
+  if (tab === 'novo-concurso') renderAreasConcursoLista('');
+}
+
+// ── Admin: Carregar usuários ────────────────
+async function carregarUsuarios() {
+  const tbody = document.getElementById('tbody-usuarios');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray4);padding:32px;">Carregando...</td></tr>';
+  try {
+    const snap = await db.collection('usuarios').orderBy('data_cadastro', 'desc').get();
+    if (snap.empty) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray4);padding:32px;">Nenhum usuário cadastrado.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = snap.docs.map(d => {
+      const u = d.data();
+      const agora = Date.now();
+      const expira = u.acesso_expira || 0;
+      const ativo = agora < expira;
+      const statusTxt = ativo
+        ? (u.plano === 'trial' ? '⏱ Trial' : `✅ ${u.plano || 'Ativo'}`)
+        : '🔒 Expirado';
+      const statusCor = ativo ? (u.plano === 'trial' ? 'badge-gold' : 'badge-green') : 'badge-red';
+      return `<tr>
+        <td class="nome-td">${u.nome || '—'} ${u.admin ? '⭐' : ''}</td>
+        <td>${u.email || '—'}</td>
+        <td>${NIVEL_LABEL[u.escolaridade] || u.escolaridade || '—'}</td>
+        <td style="font-size:12px;">${u.area || '—'}</td>
+        <td><span class="badge ${statusCor}">${statusTxt}</span></td>
+        <td style="font-size:12px;">${expira ? formatarData(expira) : '—'}</td>
+        <td>
+          <button class="btn btn-primary btn-sm" onclick="abrirModalAcesso('${d.id}','${(u.nome||'').replace(/'/g,"\\'")}')">🔓 Liberar</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--red);padding:24px;">Erro: ${e.message}</td></tr>`;
+  }
+}
+
+// ── Admin: Abrir modal de liberação ─────────
+function abrirModalAcesso(uid, nome) {
+  _modalUid = uid;
+  document.getElementById('modal-acesso-nome').textContent = nome;
+  document.getElementById('modal-acesso-obs').value = '';
+  abrirModal('modal-acesso');
+}
+
+// ── Admin: Carregar solicitações de pagamento PIX ────────────
+async function carregarPagamentos() {
+  const tbody  = document.getElementById('tbody-pagamentos');
+  const resumo = document.getElementById('pag-resumo');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray4);padding:32px;">Carregando...</td></tr>';
+  resumo.innerHTML = '';
+  try {
+    const snap = await db.collection('pagamentos').orderBy('data', 'desc').get();
+    if (snap.empty) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray4);padding:32px;">Nenhuma solicitação de pagamento ainda.</td></tr>';
+      return;
+    }
+
+    let pendentes = 0, confirmados = 0;
+    const linhas = snap.docs.map(d => {
+      const p = d.data();
+      const pendente = p.status === 'aguardando_confirmacao';
+      if (pendente) pendentes++; else confirmados++;
+      const statusTxt = pendente ? '⏳ Aguardando' : '✅ Confirmado';
+      const statusCor = pendente ? 'badge-gold' : 'badge-green';
+      const valorFmt = p.valor ? 'R$ ' + parseFloat(p.valor).toFixed(2).replace('.', ',') : '—';
+      const acao = pendente
+        ? `<button class="btn btn-primary btn-sm" onclick="abrirModalAcesso('${p.uid}','${(p.nome||'').replace(/'/g,"\\'")}')">🔓 Liberar</button>`
+        : `<span style="font-size:12px;color:var(--gray4);">${p.obs ? p.obs.replace(/</g,'&lt;') : 'Confirmado'}</span>`;
+      return `<tr>
+        <td style="font-size:12px;">${p.data ? formatarData(p.data) : '—'}</td>
+        <td class="nome-td">${p.nome || '—'}</td>
+        <td>${p.email || '—'}</td>
+        <td>${p.plano || '—'}</td>
+        <td>${valorFmt}</td>
+        <td><span class="badge ${statusCor}">${statusTxt}</span></td>
+        <td>${acao}</td>
+      </tr>`;
+    }).join('');
+
+    resumo.innerHTML = `
+      <div class="pag-resumo-card"><strong>${pendentes}</strong><span>aguardando confirmação</span></div>
+      <div class="pag-resumo-card ok"><strong>${confirmados}</strong><span>já confirmados</span></div>
+    `;
+    tbody.innerHTML = linhas;
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--red);padding:24px;">Erro: ${e.message}</td></tr>`;
+  }
+}
+
+// ── Admin: Confirmar liberação de acesso ────
+async function liberarAcesso() {
+  if (!_modalUid) return;
+  const plano = document.getElementById('modal-acesso-plano').value;
+  const obs   = document.getElementById('modal-acesso-obs').value;
+  const dias = { mensal: 30, trimestral: 90, semestral: 180 };
+  const expira = Date.now() + (dias[plano] || 30) * 24 * 60 * 60 * 1000;
+
+  showLoader(true);
+  try {
+    await db.collection('usuarios').doc(_modalUid).update({
+      acesso_expira: expira,
+      plano,
+      ultimo_pagamento: { plano, obs, data: Date.now() }
+    });
+    // Atualiza status do pagamento pendente se houver
+    const pagSnap = await db.collection('pagamentos')
+      .where('uid', '==', _modalUid)
+      .where('status', '==', 'aguardando_confirmacao')
+      .get();
+    for (const doc of pagSnap.docs) {
+      await doc.ref.update({ status: 'confirmado', data_confirmacao: Date.now(), obs });
+    }
+    toast('Acesso liberado com sucesso! ✅', 'sucesso');
+    fecharModal('modal-acesso');
+    carregarUsuarios();
+  } catch(e) {
+    toast('Erro ao liberar acesso: ' + e.message, 'erro');
+  } finally {
+    showLoader(false);
+    _modalUid = null;
+  }
+}
+
+// ── Admin: Carregar concursos ────────────────
+async function carregarConcursos() {
+  const tbody = document.getElementById('tbody-concursos');
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gray4);padding:32px;">Carregando...</td></tr>';
+  try {
+    const snap = await db.collection('concursos').orderBy('data_cadastro', 'desc').get();
+    if (snap.empty) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gray4);padding:32px;">Nenhum concurso cadastrado.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = snap.docs.map(d => {
+      const c = d.data();
+      const statusColor = { ativo:'badge-green', em_breve:'badge-gold', encerrado:'badge-red' };
+      return `<tr>
+        <td class="nome-td">${c.nome}</td>
+        <td>${c.orgao || '—'}</td>
+        <td>${c.estado || '—'}</td>
+        <td><span class="badge badge-blue">${NIVEL_LABEL[c.nivel] || c.nivel || '—'}</span></td>
+        <td style="font-size:12px;">${c.insc_ini ? formatarData(c.insc_ini) : '—'} ~ ${c.insc_fim ? formatarData(c.insc_fim) : '—'}</td>
+        <td style="font-size:12px;">${c.data_prova ? formatarData(c.data_prova) : '—'}</td>
+        <td><span class="badge ${statusColor[c.status] || 'badge-gray'}">${c.status}</span></td>
+        <td><button class="btn btn-danger btn-sm" onclick="deletarConcurso('${d.id}')">🗑</button></td>
+      </tr>`;
+    }).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--red);padding:24px;">Erro: ${e.message}</td></tr>`;
+  }
+}
+
+// ── Admin: Salvar concurso ───────────────────
+async function salvarConcurso() {
+  const nome  = document.getElementById('nc-nome').value.trim();
+  const orgao = document.getElementById('nc-orgao').value.trim();
+  const estado= document.getElementById('nc-estado').value;
+  const nivel = document.getElementById('nc-nivel').value;
+  const status= document.getElementById('nc-status').value;
+
+  if (!nome || !orgao || !estado || !nivel)
+    return toast('Preencha os campos obrigatórios (nome, órgão, estado, nível).', 'erro');
+  if (_ncAreasSel.length === 0 && nivel !== 'fundamental' && nivel !== 'medio')
+    return toast('Selecione ao menos uma área/cargo. Isso define quem verá este concurso.', 'erro');
+
+  showLoader(true);
+  try {
+    await db.collection('concursos').add({
+      nome, orgao, estado, nivel, status,
+      insc_ini:   document.getElementById('nc-insc-ini').value || '',
+      insc_fim:   document.getElementById('nc-insc-fim').value || '',
+      data_prova: document.getElementById('nc-data-prova').value || '',
+      // Cada cargo/área tem seu próprio link de banco de questões (JSON).
+      // O candidato só recebe as questões do cargo dele, dentro deste concurso.
+      // O campo banco_url pode ficar vazio por enquanto — a estrutura já
+      // está pronta para receber o link quando o banco for criado.
+      areas: _ncAreasSel.map(a => ({ nome: a, banco_url: _ncAreasBanco[a] || '' })),
+      edital:     document.getElementById('nc-edital').value.trim(),
+      slug:       document.getElementById('nc-slug').value.trim(),
+      data_cadastro: Date.now()
+    });
+    toast('Concurso cadastrado com sucesso!', 'sucesso');
+    limparFormConcurso();
+    adminTab('concursos');
+  } catch(e) {
+    toast('Erro ao salvar: ' + e.message, 'erro');
+  } finally {
+    showLoader(false);
+  }
+}
+
+function limparFormConcurso() {
+  ['nc-nome','nc-orgao','nc-edital','nc-slug',
+   'nc-insc-ini','nc-insc-fim','nc-data-prova'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('nc-estado').value = '';
+  document.getElementById('nc-nivel').value = '';
+  document.getElementById('nc-status').value = 'ativo';
+  _ncAreasSel = [];
+  _ncAreasBanco = {};
+  if (busca) busca.value = '';
+  renderAreasConcursoLista('');
+  renderAreasConcursoChips();
+}
+
+async function deletarConcurso(id) {
+  if (!confirm('Tem certeza que deseja excluir este concurso?')) return;
+  try {
+    await db.collection('concursos').doc(id).delete();
+    toast('Concurso excluído.', 'sucesso');
+    carregarConcursos();
+  } catch(e) {
+    toast('Erro ao excluir: ' + e.message, 'erro');
+  }
+}
+
+// ══════════════════════════════════════════════
+// UTILITÁRIOS
+// ══════════════════════════════════════════════
+function formatarTempo(ms) {
+  if (ms <= 0) return 'Expirado';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  if (h > 0) return `${h}h ${m}min`;
+  return `${m} minutos`;
+}
+
+function formatarData(val) {
+  if (!val) return '—';
+  // Aceita timestamp ms ou string YYYY-MM-DD
+  if (typeof val === 'number') {
+    return new Date(val).toLocaleDateString('pt-BR');
+  }
+  if (typeof val === 'string' && val.includes('-')) {
+    const [y,m,d] = val.split('-');
+    return `${d}/${m}/${y}`;
+  }
+  return val;
+}
+
+// ══════════════════════════════════════════════
+// OBSERVADOR DE AUTENTICAÇÃO (init)
+// ══════════════════════════════════════════════
+auth.onAuthStateChanged(async (user) => {
+  // Atalho de acesso: abrir o site com #admin no final da URL
+  // (ex: seusite.com/index.html#admin). Sem sessão ativa, leva
+  // direto para a tela de login. Com sessão ativa, o fluxo normal
+  // abaixo já decide para onde ir (admin ou painel comum).
+  if (!user && window.location.hash === '#admin') {
+    ir('tela-login');
+    return;
+  }
+
+  if (user) {
+    await carregarUsuarioLogado(user.uid);
+
+    // Controle de dispositivo também na sessão restaurada automaticamente
+    // pelo Firebase (ex.: usuário fechou e reabriu o navegador).
+    if (_usuario && _usuario.plano === 'trial' && _usuario.dispositivo_id) {
+      const meuDeviceId = obterDeviceId();
+      if (_usuario.dispositivo_id !== meuDeviceId) {
+        await auth.signOut();
+        _usuario = null;
+        toast('Sua conta de teste já está em uso em outro dispositivo. Assine um plano para acessar de qualquer lugar.', 'erro');
+        ir('tela-login');
+        return;
+      }
+    }
+
+    // Atalho #admin com sessão já ativa: vai direto para o admin
+    // (ou para o painel comum, se não for o admin), ignorando a
+    // tela atual — tem prioridade sobre a regra de "não perturbar
+    // quem está navegando na landing/cadastro".
+    if (window.location.hash === '#admin') {
+      if (_usuario && _usuario.admin) {
+        ir('tela-admin');
+        carregarUsuarios();
+      } else if (_usuario) {
+        ir('tela-painel');
+        renderPainel();
+      }
+      return;
+    }
+
+    // Se a tela atual for landing, login ou cadastro — não redireciona
+    // à força (a pessoa pode estar só navegando ou prestes a logar)
+    const telaAtual = document.querySelector('.tela.ativa')?.id;
+    if (telaAtual === 'tela-landing' || telaAtual === 'tela-login' || telaAtual === 'tela-cadastro') {
+      return;
+    }
+    if (_usuario && _usuario.admin) {
+      ir('tela-admin');
+      carregarUsuarios();
+    } else if (_usuario) {
+      ir('tela-painel');
+      renderPainel();
+    }
+  }
+});
+
+// ══════════════════════════════════════════════
+// BANCO DE QUESTÕES — TESTE GRÁTIS
+// ══════════════════════════════════════════════
+const BANCO = {
+
+  // ── FUNDAMENTAL (10 questões gerais) ──
+  fundamental: [
+    { q:"Qual é o resultado de 25% de 200?", a:["25","50","75","100"], c:1,
+      exp:"25% = 25/100 = 1/4. Então 1/4 × 200 = 50." },
+    { q:"A capital do estado do Pará é:", a:["Santarém","Marabá","Belém","Ananindeua"], c:2,
+      exp:"Belém é a capital e maior cidade do estado do Pará, fundada em 1616." },
+    { q:"Quantos dias tem o mês de fevereiro em um ano bissexto?", a:["27","28","29","30"], c:2,
+      exp:"Em anos bissextos (divisíveis por 4), fevereiro tem 29 dias." },
+    { q:"Qual palavra está escrita CORRETAMENTE?", a:["Excessão","Exceção","Excesão","Excessção"], c:1,
+      exp:"'Exceção' é o substantivo derivado de 'excetuar'. Atenção: apenas um 's' e sem duplo 'c'." },
+    { q:"O Brasil foi descoberto pelos portugueses no ano de:", a:["1492","1500","1502","1510"], c:1,
+      exp:"Pedro Álvares Cabral chegou ao Brasil em 22 de abril de 1500." },
+    { q:"Qual alternativa representa corretamente a ordem crescente: 3, -1, 0, -4, 2?", a:["-4,-1,0,2,3","-1,-4,0,2,3","0,-1,-4,2,3","-4,-1,2,0,3"], c:0,
+      exp:"Números negativos vêm antes do zero na reta numérica. Ordem: -4 < -1 < 0 < 2 < 3." },
+    { q:"Qual órgão é responsável por fazer as leis no Brasil?", a:["Poder Executivo","Poder Judiciário","Poder Legislativo","Ministério Público"], c:2,
+      exp:"O Poder Legislativo (Congresso Nacional: Câmara dos Deputados + Senado Federal) é responsável pela elaboração das leis." },
+    { q:"Água em estado sólido é chamada de:", a:["Vapor","Gelo","Névoa","Neblina"], c:1,
+      exp:"A água pode estar em três estados: líquido (água), sólido (gelo) e gasoso (vapor)." },
+    { q:"Qual das frases abaixo está correta quanto à concordância verbal?", a:["Os alunos foi ao passeio.","Os alunos foram ao passeio.","Os alunos fora ao passeio.","Os aluno foram ao passeio."], c:1,
+      exp:"Sujeito 'os alunos' é plural, portanto o verbo 'ir' deve estar no plural: 'foram'." },
+    { q:"Um trabalhador ganha R$ 1.200,00 e gasta 60% do salário. Quanto ele economiza?", a:["R$ 480,00","R$ 400,00","R$ 600,00","R$ 720,00"], c:0,
+      exp:"60% gasto = R$ 720,00. Economia = R$ 1.200 − R$ 720 = R$ 480,00." },
+  ],
+
+  // ── MÉDIO (10 questões gerais) ──
+  medio: [
+    { q:"A Constituição Federal do Brasil foi promulgada em:", a:["1985","1986","1988","1990"], c:2,
+      exp:"A Constituição Cidadã foi promulgada em 5 de outubro de 1988, marcando a redemocratização do Brasil." },
+    { q:"Em uma prova com 40 questões, um candidato acertou 70%. Quantas questões ele acertou?", a:["24","26","28","30"], c:2,
+      exp:"70% de 40 = 0,70 × 40 = 28 questões corretas." },
+    { q:"Qual é o antônimo de 'prolixo'?", a:["Verboso","Conciso","Detalhado","Extenso"], c:1,
+      exp:"Prolixo = que fala/escreve demais. Antônimo: conciso = breve, direto ao ponto." },
+    { q:"O Poder Executivo federal é exercido pelo:", a:["Presidente da República","Congresso Nacional","Supremo Tribunal Federal","Procurador-Geral da República"], c:0,
+      exp:"Conforme o art. 76 da CF/88, o Poder Executivo é exercido pelo Presidente da República, auxiliado pelos Ministros de Estado." },
+    { q:"Qual dos gases abaixo contribui diretamente para o efeito estufa?", a:["Oxigênio (O₂)","Nitrogênio (N₂)","Dióxido de carbono (CO₂)","Hidrogênio (H₂)"], c:2,
+      exp:"O CO₂ é o principal gás de efeito estufa emitido por atividades humanas, retendo calor na atmosfera." },
+    { q:"Se x − 3 = 7, qual é o valor de 2x + 1?", a:["19","21","23","25"], c:1,
+      exp:"x − 3 = 7 → x = 10. Então 2(10) + 1 = 21." },
+    { q:"Qual autor é considerado o maior nome do Realismo brasileiro?", a:["José de Alencar","Machado de Assis","Euclides da Cunha","Castro Alves"], c:1,
+      exp:"Machado de Assis é o principal representante do Realismo no Brasil, com obras como 'Dom Casmurro' e 'Memórias Póstumas de Brás Cubas'." },
+    { q:"O princípio da impessoalidade na Administração Pública significa que:", a:["O servidor deve agir com afeto","Os atos devem visar o interesse público, não pessoal","O servidor pode favorecer parentes","Cada servidor tem sua própria forma de agir"], c:1,
+      exp:"Impessoalidade = a Administração deve agir visando o interesse público, sem favorecimentos ou perseguições pessoais." },
+    { q:"A Revolução Industrial iniciou-se no século XVIII em qual país?", a:["França","Alemanha","Estados Unidos","Inglaterra"], c:3,
+      exp:"A Primeira Revolução Industrial começou na Inglaterra por volta de 1760, com a invenção da máquina a vapor." },
+    { q:"Qual é o resultado de √144 + √25?", a:["17","19","13","21"], c:0,
+      exp:"√144 = 12 e √25 = 5. Portanto 12 + 5 = 17." },
+  ],
+
+  // ── GERAIS para TÉCNICO e SUPERIOR (5 questões) ──
+  gerais_ts: [
+    { q:"Segundo o art. 37 da CF/88, quais são os princípios que regem a Administração Pública?", a:["Legalidade, Impessoalidade, Moralidade, Publicidade e Eficiência","Legalidade, Igualdade, Moralidade, Publicidade e Economia","Legalidade, Impessoalidade, Democracia, Publicidade e Eficiência","Justiça, Impessoalidade, Moralidade, Publicidade e Eficiência"], c:0,
+      exp:"LIMPE: Legalidade, Impessoalidade, Moralidade, Publicidade e Eficiência — os cinco princípios expressos no art. 37 da CF/88." },
+    { q:"Em relação à língua portuguesa, assinale a alternativa em que a crase está empregada CORRETAMENTE:", a:["Entreguei o relatório à ele.","Refiro-me à documentos importantes.","Compareça à reunião amanhã.","Obedecemos à normas rigorosas."], c:2,
+      exp:"Crase ocorre antes de substantivo feminino quando há fusão da preposição 'a' com o artigo 'a'. 'À reunião' = a + a reunião (correta)." },
+    { q:"Um servidor público estável pode ser demitido por:", a:["Decisão unilateral do chefe imediato","Necessidade de corte de gastos da repartição","Processo administrativo disciplinar com ampla defesa","Simples vontade do gestor público"], c:2,
+      exp:"A estabilidade protege o servidor. A perda do cargo exige PAD (Processo Administrativo Disciplinar) com contraditório e ampla defesa, sentença judicial ou avaliação de desempenho." },
+    { q:"No contexto de ética no serviço público, 'nepotismo' significa:", a:["Corrupção financeira envolvendo licitações","Favorecimento de parentes na nomeação para cargos públicos","Abuso de poder na execução de tarefas","Ineficiência crônica no atendimento ao cidadão"], c:1,
+      exp:"Nepotismo é a prática de nomear parentes para cargos públicos, vedada pela Súmula Vinculante nº 13 do STF." },
+    { q:"Qual das alternativas apresenta um exemplo de DIREITO FUNDAMENTAL previsto na Constituição Federal?", a:["Obrigação de votar","Direito à liberdade de expressão","Dever de pagar tributos","Obrigação de prestar serviço militar"], c:1,
+      exp:"A liberdade de expressão é um direito fundamental (art. 5º, IV, CF/88). Os demais itens são deveres/obrigações constitucionais." },
+  ],
+
+  // ── ESPECÍFICAS por área (5 questões cada) ──
+  especificas: {
+    'Técnico em Enfermagem': [
+      { q:"A técnica correta para higienização das mãos antes de um procedimento é:", a:["Somente água corrente por 5 segundos","Água e sabão por 40 a 60 segundos conforme protocolo","Apenas gel alcoólico sem necessidade de esfregar","Luvas sem necessidade de lavar as mãos"], c:1,
+        exp:"A OMS recomenda higienização com água e sabão por 40 a 60 segundos, seguindo os 6 passos do protocolo. É a principal medida de prevenção de infecções." },
+      { q:"A pressão arterial considerada normal para um adulto é:", a:["180/120 mmHg","160/100 mmHg","120/80 mmHg","90/60 mmHg"], c:2,
+        exp:"Pressão arterial normal: sistólica < 130 mmHg e diastólica < 85 mmHg. O valor 120/80 mmHg é considerado ideal para adultos." },
+      { q:"Qual posição é indicada para paciente com dificuldade respiratória (dispneia)?", a:["Decúbito dorsal (deitado de costas)","Posição de Trendelenburg","Posição ortopneica (Fowler elevado)","Decúbito lateral esquerdo"], c:2,
+        exp:"A posição ortopneica (Fowler a 90°) facilita a expansão pulmonar, reduzindo o esforço respiratório em pacientes com dispneia." },
+      { q:"O que significa a sigla SSVV na enfermagem?", a:["Sinais de Saúde e Vitalidade Variável","Sinais e Sintomas de Vida Verificados","Sinais Vitais — PA, pulso, temperatura e respiração","Sistema de Saúde e Vigilância Veicular"], c:2,
+        exp:"SSVV = Sinais Vitais: Pressão Arterial (PA), Frequência Cardíaca (pulso), Temperatura Corporal e Frequência Respiratória." },
+      { q:"Na administração de medicamentos, os '5 certos' incluem:", a:["Paciente certo, medicamento certo, dose certa, via certa e hora certa","Paciente certo, médico certo, dose certa, via certa e hora certa","Paciente certo, medicamento certo, dose certa, horário certo e enfermeiro certo","Medicamento certo, dose certa, via certa, hora certa e prontuário certo"], c:0,
+        exp:"Os 5 certos da enfermagem: paciente certo, medicamento certo, dose certa, via certa e hora certa. São a base da segurança na administração de medicamentos." },
+    ],
+    'Técnico em Informática': [
+      { q:"Qual protocolo é responsável pela atribuição automática de endereços IP em uma rede?", a:["DNS","FTP","DHCP","HTTP"], c:2,
+        exp:"DHCP (Dynamic Host Configuration Protocol) atribui automaticamente endereços IP, máscara de sub-rede, gateway e DNS aos dispositivos da rede." },
+      { q:"O que é um backup incremental?", a:["Cópia de todos os arquivos do sistema","Cópia apenas dos arquivos alterados desde o último backup","Cópia apenas dos arquivos criados no dia","Cópia do sistema operacional"], c:1,
+        exp:"Backup incremental copia apenas os arquivos modificados desde o último backup (completo ou incremental), economizando espaço e tempo." },
+      { q:"Qual camada do modelo OSI é responsável pelo endereçamento IP?", a:["Camada de Enlace","Camada de Transporte","Camada de Rede","Camada de Aplicação"], c:2,
+        exp:"A Camada de Rede (camada 3 do modelo OSI) é responsável pelo endereçamento lógico (IP) e roteamento dos pacotes." },
+      { q:"O que significa a sigla HTML?", a:["HyperText Markup Language","High Transfer Markup Language","HyperText Management Language","High Technology Meta Language"], c:0,
+        exp:"HTML (HyperText Markup Language) é a linguagem de marcação padrão usada para criar páginas web." },
+      { q:"Qual tipo de vírus se instala no computador sem o conhecimento do usuário e permite acesso remoto por terceiros?", a:["Worm","Trojan (Cavalo de Troia)","Spyware","Ransomware"], c:1,
+        exp:"O Trojan (Cavalo de Troia) se disfarça de programa legítimo para se instalar e abrir uma 'porta dos fundos', permitindo acesso remoto não autorizado." },
+    ],
+    'Pedagogia': [
+      { q:"Segundo Piaget, em qual estágio de desenvolvimento a criança de 7 a 11 anos se encontra?", a:["Sensório-motor","Pré-operatório","Operatório-concreto","Operatório-formal"], c:2,
+        exp:"No estágio operatório-concreto (7 a 11 anos), a criança desenvolve o pensamento lógico sobre objetos concretos, domina conservação, classificação e seriação." },
+      { q:"A Lei de Diretrizes e Bases da Educação Nacional (LDB) corresponde à:", a:["Lei nº 9.394/1996","Lei nº 8.069/1990","Lei nº 9.503/1997","Lei nº 10.172/2001"], c:0,
+        exp:"A LDB é a Lei nº 9.394, de 20 de dezembro de 1996. Define a estrutura e organização da educação brasileira em todos os níveis." },
+      { q:"O método de Paulo Freire propõe que a educação deve:", a:["Focar na memorização de conteúdos","Partir da realidade e vivência do educando","Priorizar avaliações quantitativas","Separar teoria da prática cotidiana"], c:1,
+        exp:"Paulo Freire critica a 'educação bancária' (depósito de conteúdo) e propõe a pedagogia dialógica, partindo da realidade do educando para uma consciência crítica." },
+      { q:"O que é 'avaliação formativa' no contexto educacional?", a:["Avaliação realizada apenas no fim do ano letivo","Avaliação que classifica alunos em aprovados e reprovados","Avaliação contínua que acompanha o processo de aprendizagem","Avaliação padronizada nacional"], c:2,
+        exp:"A avaliação formativa é processual e contínua, visa monitorar o progresso do aluno durante o processo de ensino-aprendizagem para ajustar as estratégias pedagógicas." },
+      { q:"O documento que orienta a Educação Básica brasileira estabelecendo competências e habilidades essenciais é:", a:["PCN — Parâmetros Curriculares Nacionais","BNCC — Base Nacional Comum Curricular","PNE — Plano Nacional de Educação","DCN — Diretrizes Curriculares Nacionais"], c:1,
+        exp:"A BNCC (Base Nacional Comum Curricular), homologada em 2017/2018, define as competências e habilidades essenciais que todos os estudantes devem desenvolver na Educação Básica." },
+    ],
+    'Direito': [
+      { q:"O princípio do 'contraditório e da ampla defesa' está previsto na Constituição Federal no artigo:", a:["Art. 5º, LIV","Art. 5º, LV","Art. 5º, LVII","Art. 93, IX"], c:1,
+        exp:"Art. 5º, LV, CF/88: 'aos litigantes, em processo judicial ou administrativo, e aos acusados em geral são assegurados o contraditório e a ampla defesa, com os meios e recursos a ela inerentes'." },
+      { q:"Qual é a diferença entre dolo e culpa no Direito Penal?", a:["Dolo é acidental; culpa é intencional","Dolo é intencional; culpa é por negligência, imprudência ou imperícia","Dolo é atenuante; culpa é agravante","Dolo e culpa são sinônimos no Código Penal"], c:1,
+        exp:"Dolo: o agente quer o resultado ou assume o risco de produzi-lo (intenção). Culpa: o resultado não é querido, mas ocorre por negligência, imprudência ou imperícia." },
+      { q:"A Lei nº 8.112/1990 dispõe sobre:", a:["Processo Administrativo Federal","Estatuto dos Servidores Públicos Civis da União","Licitações e Contratos Administrativos","Lei de Improbidade Administrativa"], c:1,
+        exp:"A Lei 8.112/1990 é o Estatuto dos Servidores Públicos Civis da União, estabelecendo direitos, deveres, vencimentos e regime disciplinar." },
+      { q:"Segundo o Código Civil, a personalidade civil da pessoa natural começa:", a:["Com o registro civil","Com 18 anos de idade","Com o nascimento com vida","Com a concepção"], c:2,
+        exp:"Art. 2º do CC: 'A personalidade civil da pessoa começa do nascimento com vida; mas a lei põe a salvo, desde a concepção, os direitos do nascituro'." },
+      { q:"O prazo prescricional para ações pessoais no Código Civil, quando não previsto prazo específico, é de:", a:["3 anos","5 anos","10 anos","15 anos"], c:2,
+        exp:"Art. 205 do CC: 'A prescrição ocorre em dez anos, quando a lei não lhe haja fixado prazo menor'." },
+    ],
+    'Administração': [
+      { q:"O processo administrativo é composto pelas funções:", a:["Planejar, Organizar, Dirigir e Controlar (PODC)","Planejar, Operar, Distribuir e Coordenar","Programar, Organizar, Distribuir e Controlar","Planejar, Orientar, Delegar e Coordenar"], c:0,
+        exp:"PODC: Planejamento (definir objetivos), Organização (estruturar recursos), Direção (liderar pessoas) e Controle (avaliar resultados) são as funções clássicas da administração." },
+      { q:"O que é 'gestão por competências'?", a:["Gestão baseada apenas no tempo de serviço dos servidores","Modelo que alinha competências individuais aos objetivos organizacionais","Sistema de punição por falta de habilidades","Gestão focada exclusivamente em resultados financeiros"], c:1,
+        exp:"Gestão por competências busca identificar, desenvolver e alocar competências (conhecimentos, habilidades e atitudes — CHA) alinhadas à estratégia organizacional." },
+      { q:"Em um organograma, a autoridade que desce do topo para a base caracteriza a estrutura:", a:["Matricial","Horizontal","Hierárquica (linear)","Em rede"], c:2,
+        exp:"A estrutura hierárquica (ou linear) tem cadeia de comando clara, com autoridade fluindo de cima para baixo, caracterizando os organogramas tradicionais." },
+      { q:"O Balanced Scorecard (BSC) foi desenvolvido por:", a:["Peter Drucker e Henry Mintzberg","Robert Kaplan e David Norton","Michael Porter e Philip Kotler","Frederick Taylor e Henri Fayol"], c:1,
+        exp:"O BSC foi criado por Robert Kaplan e David Norton na década de 1990, como ferramenta de gestão estratégica com quatro perspectivas: financeira, clientes, processos e aprendizado." },
+      { q:"O que é 'fluxo de caixa' em uma organização?", a:["Lista de patrimônio da empresa","Controle de entradas e saídas de dinheiro em um período","Balanço de ativos e passivos","Relatório de lucros e prejuízos"], c:1,
+        exp:"Fluxo de caixa registra todas as entradas (recebimentos) e saídas (pagamentos) de recursos financeiros, fundamental para controle da liquidez organizacional." },
+    ],
+    'default_tecnico': [
+      { q:"No contexto do trabalho técnico, 'EPI' significa:", a:["Equipamento de Proteção Individual","Equipamento de Produção Industrial","Estrutura de Processo Integrado","Equipamento de Prevenção de Incêndio"], c:0,
+        exp:"EPI (Equipamento de Proteção Individual) são dispositivos de uso individual destinados a proteger o trabalhador de riscos à saúde e segurança, conforme NR-6." },
+      { q:"A NR-17 da legislação trabalhista brasileira trata de:", a:["Segurança em instalações elétricas","Ergonomia no trabalho","Equipamentos de Proteção Individual","Trabalho em altura"], c:1,
+        exp:"A NR-17 (Ergonomia) estabelece parâmetros para adaptação das condições de trabalho às características psicofisiológicas dos trabalhadores, visando conforto, segurança e desempenho." },
+      { q:"O que é um 'fluxograma' em processos técnicos?", a:["Gráfico de barras para comparar desempenho","Representação gráfica sequencial de um processo ou algoritmo","Tabela de custos de produção","Diagrama de peças de equipamentos"], c:1,
+        exp:"Fluxograma é uma representação visual de etapas de um processo, usando símbolos padronizados (retângulos, losangos, setas) para mapear atividades e decisões." },
+      { q:"Em gestão da qualidade, o ciclo PDCA representa:", a:["Planejar, Distribuir, Controlar e Avaliar","Plan, Do, Check, Act (Planejar, Executar, Verificar e Agir)","Programar, Desenvolver, Controlar e Arquivar","Planejar, Definir, Calcular e Analisar"], c:1,
+        exp:"PDCA: Plan (Planejar), Do (Executar), Check (Verificar) e Act (Agir corretivamente). É a base da gestão da qualidade e da melhoria contínua." },
+      { q:"Qual documento registra formalmente as atividades realizadas em uma manutenção técnica?", a:["Nota fiscal","Ordem de Serviço (OS)","Folha de ponto","Contrato de trabalho"], c:1,
+        exp:"A Ordem de Serviço (OS) é o documento que formaliza a solicitação, execução e conclusão de serviços técnicos, registrando responsáveis, materiais e procedimentos." },
+    ],
+    'default_superior': [
+      { q:"Na pesquisa científica, o que diferencia pesquisa qualitativa de quantitativa?", a:["A qualitativa usa números; a quantitativa usa palavras","A qualitativa busca compreender fenômenos em profundidade; a quantitativa mensura e generaliza","A qualitativa é mais precisa; a quantitativa é subjetiva","Não há diferença metodológica entre elas"], c:1,
+        exp:"Pesquisa qualitativa: busca compreender significados, contextos e fenômenos em profundidade (entrevistas, observações). Quantitativa: mensura, quantifica e generaliza por meio de dados numéricos e estatísticas." },
+      { q:"O que é 'revisão sistemática' na produção acadêmica?", a:["Revisão informal de um artigo por um colega","Método rigoroso de busca, seleção e síntese de evidências sobre um tema","Releitura do próprio texto antes de publicar","Correção ortográfica do trabalho"], c:1,
+        exp:"Revisão sistemática é um método rigoroso de pesquisa que busca, seleciona, avalia criticamente e sintetiza estudos primários sobre uma questão específica, com metodologia explícita e reproduzível." },
+      { q:"O que significa 'interdisciplinaridade' no contexto acadêmico e profissional?", a:["Estudo de uma única disciplina em profundidade","Integração de conhecimentos de diferentes áreas para resolver problemas complexos","Divisão rígida entre áreas do conhecimento","Substituição de uma disciplina por outra"], c:1,
+        exp:"Interdisciplinaridade é a integração e diálogo entre diferentes campos do conhecimento para abordar problemas que uma única disciplina não conseguiria resolver completamente." },
+      { q:"Em projetos, o que é 'escopo'?", a:["O prazo total para conclusão","O orçamento disponível","A definição do que será e do que não será feito no projeto","O número de pessoas envolvidas"], c:2,
+        exp:"Escopo é a definição clara e documentada de tudo que o projeto inclui (entregas, tarefas, limites) e o que está excluído, evitando desvios e retrabalho." },
+      { q:"Qual é o principal objetivo do 'planejamento estratégico' em uma organização?", a:["Resolver problemas operacionais do dia a dia","Definir a direção de longo prazo e os objetivos da organização","Controlar os gastos mensais","Elaborar o organograma da instituição"], c:1,
+        exp:"O planejamento estratégico define a missão, visão, valores e objetivos de longo prazo da organização, orientando a tomada de decisão e a alocação de recursos." },
+    ],
+  }
+};
+
+// ── Estado do teste ──────────────────────────
+let _testeNivel = '';
+let _testeArea  = '';
+let _testeQuestoes = [];
+let _testeIdx   = 0;
+let _testeRespostas = [];
+let _testeRespondida = false;
+
+// ── Selecionar nível no teste ─────────────────
+function selecionarNivelTeste(nivel, el) {
+  _testeNivel = nivel;
+  document.querySelectorAll('.nivel-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+
+  const wrap  = document.getElementById('area-teste-wrap');
+  const label = document.getElementById('area-teste-label');
+  const sel   = document.getElementById('area-teste-sel');
+
+  if (nivel === 'tecnico' || nivel === 'superior') {
+    wrap.style.display = 'block';
+    label.textContent  = nivel === 'tecnico' ? 'Sua área técnica' : 'Sua área de graduação';
+    sel.innerHTML = '<option value="">Selecione...</option>';
+    AREAS[nivel].forEach(a => {
+      sel.innerHTML += `<option value="${a}">${a}</option>`;
+    });
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
+// ── Montar banco de questões para o teste ─────
+function montarQuestoes(nivel, area) {
+  let qs = [];
+  if (nivel === 'fundamental') {
+    qs = embaralhar([...BANCO.fundamental]).slice(0, 10);
+  } else if (nivel === 'medio') {
+    qs = embaralhar([...BANCO.medio]).slice(0, 10);
+  } else {
+    // 5 gerais + 5 específicas
+    const gerais = embaralhar([...BANCO.gerais_ts]).slice(0, 5).map(q => ({...q, tipo:'geral'}));
+    let esp = BANCO.especificas[area]
+      || BANCO.especificas['default_' + nivel]
+      || BANCO.especificas['default_superior'];
+    const especificas = embaralhar([...esp]).slice(0, 5).map(q => ({...q, tipo:'especifica'}));
+    qs = [...gerais, ...especificas];
+  }
+  // Marcar tipo nas questões simples
+  return qs.map(q => ({ ...q, tipo: q.tipo || 'geral' }));
+}
+
+function embaralhar(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ── Iniciar teste ─────────────────────────────
+function iniciarTeste() {
+  if (!_testeNivel) return toast('Selecione seu nível de escolaridade.', 'aviso');
+  if ((_testeNivel === 'tecnico' || _testeNivel === 'superior')) {
+    _testeArea = document.getElementById('area-teste-sel').value;
+    if (!_testeArea) return toast('Selecione sua área de formação.', 'aviso');
+  }
+  _testeQuestoes  = montarQuestoes(_testeNivel, _testeArea);
+  _testeIdx       = 0;
+  _testeRespostas = [];
+  _testeRespondida = false;
+
+  document.getElementById('teste-step-perfil').classList.remove('ativo');
+  document.getElementById('teste-step-simulado').classList.add('ativo');
+  renderQuestao();
+}
+
+// ── Renderizar questão atual ──────────────────
+function renderQuestao() {
+  const q   = _testeQuestoes[_testeIdx];
+  const tot = _testeQuestoes.length;
+  _testeRespondida = false;
+
+  // Progress
+  document.getElementById('sim-progress-bar').style.width = `${(_testeIdx / tot) * 100}%`;
+
+  const tipoLabel = q.tipo === 'especifica'
+    ? `<span class="sim-q-tipo especifica">Conhecimento específico — ${_testeArea || 'Área'}</span>`
+    : `<span class="sim-q-tipo geral">Conhecimentos Gerais</span>`;
+
+  const letras = ['A','B','C','D'];
+  const alts = q.a.map((alt, i) => `
+    <div class="sim-alt" id="alt-${i}" onclick="responder(${i})">
+      <div class="sim-alt-letra">${letras[i]}</div>
+      <div class="sim-alt-txt">${alt}</div>
+    </div>`).join('');
+
+  const isUltima = _testeIdx === tot - 1;
+
+  document.getElementById('sim-questao-wrap').innerHTML = `
+    <div class="sim-q-num">Questão ${_testeIdx + 1} de ${tot}</div>
+    ${tipoLabel}
+    <div class="sim-q-enunciado">${q.q}</div>
+    <div class="sim-alternativas">${alts}</div>
+    <div class="sim-feedback" id="sim-feedback"></div>
+    <div class="sim-nav">
+      <button class="btn btn-primary" id="btn-prox" onclick="${isUltima ? 'finalizarTeste()' : 'proximaQuestao()'}" disabled
+        style="max-width:220px;opacity:.4;">
+        ${isUltima ? 'Ver resultado →' : 'Próxima questão →'}
+      </button>
+    </div>`;
+}
+
+// ── Responder questão ─────────────────────────
+function responder(idx) {
+  if (_testeRespondida) return;
+  _testeRespondida = true;
+  const q = _testeQuestoes[_testeIdx];
+  const acertou = idx === q.c;
+
+  _testeRespostas.push({ q: _testeIdx, resposta: idx, correta: q.c, acertou });
+
+  // Marcar visual
+  document.querySelectorAll('.sim-alt').forEach((el, i) => {
+    el.classList.add('respondida');
+    if (i === q.c) el.classList.add('correta');
+    else if (i === idx && !acertou) el.classList.add('errada');
+  });
+
+  // Feedback
+  const fb = document.getElementById('sim-feedback');
+  fb.className = 'sim-feedback show ' + (acertou ? 'acerto' : 'erro');
+  fb.innerHTML = `
+    <div class="sim-feedback-titulo">${acertou ? '✅ Resposta correta!' : '❌ Resposta incorreta'}</div>
+    <div class="sim-feedback-txt">${q.exp}</div>`;
+
+  // Habilitar botão próxima
+  const btnProx = document.getElementById('btn-prox');
+  btnProx.disabled = false;
+  btnProx.style.opacity = '1';
+}
+
+function proximaQuestao() {
+  _testeIdx++;
+  renderQuestao();
+  document.getElementById('tela-teste').scrollTop = 0;
+}
+
+// ── Finalizar e exibir resultado ──────────────
+function finalizarTeste() {
+  const acertos = _testeRespostas.filter(r => r.acertou).length;
+  const tot     = _testeQuestoes.length;
+  const pct     = Math.round((acertos / tot) * 100);
+
+  // Score visual
+  const scoreEl = document.getElementById('res-score');
+  scoreEl.textContent = `${acertos}/${tot}`;
+  let cls = 'fraco', msg = '';
+  if (pct >= 80)      { cls = 'otimo'; msg = '🏆 Excelente desempenho! Você está bem preparado.'; }
+  else if (pct >= 60) { cls = 'bom';   msg = '👍 Bom resultado! Mas ainda há espaço para melhorar.'; }
+  else if (pct >= 40) { cls = 'regular'; msg = '📖 Resultado regular. Você precisa estudar mais.'; }
+  else                { msg = '💪 Resultado abaixo da média. Com o VERUS você vai melhorar!'; }
+  scoreEl.className = `resultado-score ${cls}`;
+  document.getElementById('res-msg').textContent = msg;
+
+  // Gabarito
+  const gabarito = document.getElementById('res-gabarito');
+  gabarito.innerHTML = _testeRespostas.map((r, i) => {
+    const q = _testeQuestoes[i];
+    const letras = ['A','B','C','D'];
+    return `
+      <div class="res-item ${r.acertou ? 'acerto' : 'erro'}">
+        <div class="res-item-header">
+          <span class="res-item-ico">${r.acertou ? '✅' : '❌'}</span>
+          <span class="res-item-q">Questão ${i + 1} — ${q.tipo === 'especifica' ? 'Específica' : 'Geral'}</span>
+        </div>
+        <div class="res-item-enunciado">${q.q}</div>
+        <div class="res-item-resp">
+          Sua resposta: <span class="${r.acertou ? 'correta' : 'errada'}">${letras[r.resposta]} — ${q.a[r.resposta]}</span>
+          ${!r.acertou ? `<br>Resposta correta: <span class="correta">${letras[r.correta]} — ${q.a[r.correta]}</span>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  // Trocar step
+  document.getElementById('teste-step-simulado').classList.remove('ativo');
+  document.getElementById('teste-step-resultado').classList.add('ativo');
+  document.getElementById('tela-teste').scrollTop = 0;
+}
+// ══════════════════════════════════════════════
+// EFEITO HEXAGONAL — popula hexágonos com glow
+// no fundo do hero e da tela de login
+// ══════════════════════════════════════════════
+function popularHexBg(containerId, count) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  // Posições espalhadas com leve aglomeração, ecoando um padrão
+  // de "dados em destaque" subindo da esquerda para a direita.
+  const base = [
+    {x:'2%',  y:'8%',  d:'0s',   s:.9},  {x:'14%', y:'28%', d:'1.2s', s:1.3},
+    {x:'6%',  y:'52%', d:'2.1s', s:.8},  {x:'24%', y:'12%', d:'0.6s', s:.7},
+    {x:'30%', y:'48%', d:'1.8s', s:1.1}, {x:'20%', y:'72%', d:'2.6s', s:.65},
+    {x:'40%', y:'30%', d:'3.2s', s:1.4}, {x:'48%', y:'60%', d:'0.3s', s:.85},
+    {x:'56%', y:'15%', d:'1.5s', s:.75}, {x:'62%', y:'42%', d:'2.4s', s:1.2},
+    {x:'70%', y:'68%', d:'0.9s', s:.7},  {x:'78%', y:'22%', d:'1.0s', s:1.5},
+    {x:'86%', y:'50%', d:'2.0s', s:.9},  {x:'92%', y:'10%', d:'2.8s', s:.6},
+    {x:'90%', y:'76%', d:'1.4s', s:.8},
+  ];
+  const frag = document.createDocumentFragment();
+  base.slice(0, count || base.length).forEach(p => {
+    const el = document.createElement('div');
+    el.className = 'hexg';
+    el.style.left = p.x;
+    el.style.top = p.y;
+    el.style.animationDelay = p.d;
+    el.style.setProperty('--hs', p.s);
+    frag.appendChild(el);
+  });
+  container.appendChild(frag);
+}
+popularHexBg('heroHexGlow');
+popularHexBg('loginHexGlow', 8);
+
+// ══════════════════════════════════════════════
+// INIT DA LANDING
+// ══════════════════════════════════════════════
+carregarLandingConcursos();
+carregarStatsLanding();
+
+// Quando entra na tela de painel, renderiza
+document.getElementById('tela-painel').addEventListener('animationstart', () => {
+  if (_usuario) renderPainel();
+});
+</script>
+
+</body>
+</html>
